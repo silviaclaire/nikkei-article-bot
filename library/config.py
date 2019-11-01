@@ -32,3 +32,7 @@ class Config:
     @property
     def max_article(self) -> int:
         return self.parser.getint('bot', 'max_article')
+
+    @property
+    def port(self) -> int:
+        return self.parser.getint('app', 'port')

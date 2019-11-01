@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Result{% endblock %}
+
+{% block content %}
+
+{% if result %}
+
+<table class="table table-sm table-hover">
+    <thead>
+        <tr>
+            <th scope="col">Topic</th>
+            <th scope="col" colspan="4">Top Words</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for topic in result.keys() %}
+        <tr>
+            <th scope="row">{{ topic }}</th>
+            {% for word in result[topic] %}
+            <td>{{ word }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% else %}
+
+<div class="alert alert-info" role="alert">
+    No results yet.
+</div>
+
+{% endif %}
+
+{% endblock %}

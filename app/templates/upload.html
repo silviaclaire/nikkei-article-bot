@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Upload{% endblock %}
+
+{% block content %}
+
+<!-- file upload form -->
+<form method="post" action="/upload" enctype="multipart/form-data">
+    <div class="input-group mb-3">
+        <div class="custom-file">
+            <input type="file" class="custom-file-input" id="inputGroupFile", name="file">
+            <label class="custom-file-label" for="inputGroupFile" aria-describedby="inputGroupFileAddon">
+                Choose a CSV file
+            </label>
+        </div>
+        <div class="input-group-append">
+            <input type="submit" class="input-group-text" id="inputGroupFileAddon" value="Upload">
+        </div>
+    </div>
+</form>
+
+<!-- alert message -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    <strong>{{ category }}:</strong> {{ message }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- start button -->
+<div class="text-center">
+    <button id="btnStart" class="btn btn-primary btn-lg" disabled>
+        Start
+    </button>
+</div>
+
+{% endblock %}
+
+
+{% block script %}
+<script>
+
+    let requestUrl
+    let fileName = "{{ filename }}"
+
+    // replace the label with the choosen file"s name
+    $("#inputGroupFile").on("change", function() {
+        fileName = $(this).val().split("\\").pop()
+        $(this).next(".custom-file-label").html(fileName)
+    })
+
+    // enable start button on successful upload
+    if (fileName != "") {
+        $("#btnStart").prop("disabled", false)
+    } else {
+        $("#btnStart").prop("disabled", true)
+    }
+
+    // if clicked, run program with this file
+    $("#btnStart").on("click", ()=>{
+        requestUrl = `/run?filename=${fileName}`
+        $.post(requestUrl, ()=>{
+            window.location.href = "/result"
+        })
+    })
+
+</script>
+{% endblock %}

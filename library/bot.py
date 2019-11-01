@@ -3,10 +3,12 @@ import re
 import random
 import requests
 import traceback
+import threading
 from time import sleep
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
+from library.constants import *
 from library.config import Config
 from library.db import DatabaseClient
 from library.utils import save_dummy_csv
@@ -105,3 +107,38 @@ def run(csv_filepath, db_filepath=cfg.db_filepath, max_article=cfg.max_article):
 
         print(f"done: {i+1}/{len(urls)} ({article['title']})")
 
+        # calculate current progress
+        if max_article:
+            progress = round((i+1)/max_article*100, 1)
+        else:
+            progress = round((i+1)/len(urls)*100, 1)
+
+        yield progress
+
+
+class Bot(threading.Thread):
+    def __init__(self, csv_filepath):
+        super().__init__()
+        self.progress = 0
+        self.status = BotStatus.IDLE
+        self.csv_filepath = csv_filepath
+
+    def run(self):
+        self.status = BotStatus.PROCESSING
+        try:
+            for current_progress in run(self.csv_filepath):
+               self.progress = current_progress
+            sleep(1.5)
+        except Exception as err:
+            self.error = err
+            self.status = BotStatus.ERROR
+        else:
+            # ! dummy
+            self.result = {
+                '#0': ['最大化', '顧客', '体験', '価値'],
+                '#1': ['農業', '環境', '栽培', '省資源'],
+                '#2': ['最大化', '顧客', '体験', '価値'],
+                '#3': ['農業', '環境', '栽培', '省資源'],
+            }
+            # ! dummy
+            self.status = BotStatus.COMPLETE
