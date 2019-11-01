@@ -10,6 +10,7 @@
 </div>
 <div class="text-center mt-1">
     <p id="msgProgress"></p>
+    <button id="btnStop" class="btn btn-danger">Stop</button>
 </div>
 
 {% endblock %}
@@ -19,6 +20,7 @@
 <script>
 
     let timer
+    let userStop = false
 
     $(function () {
         timer = setInterval(check_status, 1000*2)
@@ -33,10 +35,19 @@
                 $("#msgProgress").text(`Scrawling articles...${res.progress}%`)
             } else {
                 clearInterval(timer)
-                window.location.href = "/result"
+                if (!userStop) {
+                    window.location.href = "/result"
+                }
             }
         })
     }
+
+    // if clicked, stop program
+    $("#btnStop").on("click", ()=>{
+        userStop = true
+        clearInterval(timer)
+        window.location.href = "/stop"
+    })
 
 </script>
 

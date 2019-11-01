@@ -62,6 +62,13 @@ def run():
     return redirect(url_for('result'))
 
 
+@app.route('/stop')
+def stop():
+    if bot_thread:
+        bot_thread.stop()
+    return redirect(url_for('result', result=None))
+
+
 @app.route('/status')
 def status():
     if bot_thread:
@@ -71,7 +78,7 @@ def status():
 
 @app.route('/result')
 def result():
-    if bot_thread is None:
+    if bot_thread is None or bot_thread.status == BotStatus.IDLE:
         return render_template('result.html', result=None)
     elif bot_thread.status == BotStatus.PROCESSING:
         return render_template('processing.html')

@@ -122,13 +122,26 @@ class Bot(threading.Thread):
         self.progress = 0
         self.status = BotStatus.IDLE
         self.csv_filepath = csv_filepath
+        self._stop = threading.Event()
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
 
     def run(self):
         self.status = BotStatus.PROCESSING
         try:
             for current_progress in run(self.csv_filepath):
-               self.progress = current_progress
-            sleep(1.5)
+                # get current progress
+                self.progress = current_progress
+                # if stopped by user
+                if self.stopped():
+                    # reset bot
+                    self.progress = 0
+                    self.status = BotStatus.IDLE
+                    return
         except Exception as err:
             self.error = err
             self.status = BotStatus.ERROR
