@@ -22,6 +22,14 @@ class Config:
         self.parser.read('config.ini', encoding='utf-8')
 
     @property
+    def keyword(self) -> str:
+        return self.parser.get('bot', 'keyword')
+
+    @property
+    def industry(self) -> int:
+        return self.parser.getint('bot', 'industry')
+
+    @property
     def csv_filepath(self) -> str:
         return self.parser.get('bot', 'csv_filepath')
 

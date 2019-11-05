@@ -11,7 +11,7 @@ from fake_useragent import UserAgent
 from library.constants import *
 from library.config import Config
 from library.db import DatabaseClient
-from library.utils import save_dummy_csv
+from library.utils import get_urls
 
 # read config
 cfg = Config()
@@ -78,9 +78,9 @@ def run(csv_filepath, db_filepath=cfg.db_filepath, max_article=cfg.max_article):
     # initialize db
     db_client = DatabaseClient(db_filepath)
 
-    # make a dummy if csv file doesn't exist
+    # get urls if csv file doesn't exist
     if not os.path.exists(csv_filepath):
-        save_dummy_csv(csv_filepath)
+        get_urls(csv_filepath, keyword=cfg.keyword, industry=cfg.industry)
 
     # get urls from csv file
     urls = get_articles_urls(csv_filepath)
