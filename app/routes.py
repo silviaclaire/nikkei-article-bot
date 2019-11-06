@@ -52,11 +52,28 @@ def upload():
 
 @app.route('/run', methods=['POST'])
 def run():
+    keyword = request.args.get('keyword')
+    industry = request.args.get('industry')
     filename = request.args.get('filename')
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+    if not (filename or all([keyword, industry])):
+        return render_template('error.html', error=f'Not enough args ({list(request.args)})')
 
     global bot_thread
-    bot_thread = Bot(filepath)
+
+    # if still processing
+    if bot_thread and bot_thread.status == BotStatus.PROCESSING:
+        return render_template('error.html', error=f'Still processing')
+
+    if filename:
+        # run urls in file
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        bot_thread = Bot(keyword=None, industry=None, csv_filepath=filepath)
+    else:
+        # run urls via search
+        bot_thread = Bot(keyword=keyword, industry=industry, csv_filepath=None)
+
+    bot_thread.setDaemon(True)
     bot_thread.start()
 
     return redirect(url_for('result'))

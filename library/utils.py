@@ -5,11 +5,18 @@ import urllib.parse
 from bs4 import BeautifulSoup
 
 
-def get_urls(out_file, keyword, industry):
+def get_urls_from_file(csv_filepath):
+    with open(csv_filepath, 'r') as f:
+        urls = f.read().split()
+    return urls
+
+
+def get_urls_from_search(keyword, industry):
     # start a search
+    assert 0 <= int(industry) <= 14, f'Industry must between 0~14 ({industry})'
     start_url = f'https://www.nikkei.com/pressrelease/?searchKeyword={keyword}&au={industry}'
     result = requests.get(start_url)
-    assert result.status_code == 200
+    assert result.status_code == 200, f'Status code error ({result.status_code})'
     soup = BeautifulSoup(result.content, features='html.parser')
 
     # get total number of items to calculate total pages
@@ -33,6 +40,4 @@ def get_urls(out_file, keyword, industry):
 
     print(f'items found: {len(urls)}')
 
-    # save as csv
-    with open(out_file, 'w') as f:
-        f.writelines('\n'.join(urls))
+    return urls
