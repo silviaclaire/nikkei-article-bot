@@ -2,7 +2,7 @@ from app import app
 
 import os
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, make_response, flash, request, redirect, url_for
+from flask import Flask, render_template, make_response, flash, request, redirect, url_for, send_file
 
 from library.bot import Bot
 from library.constants import *
@@ -108,3 +108,15 @@ def result():
         return render_template('result.html', result=bot_thread.result)
     else:
         return render_template('error.html', error=bot_thread.error)
+
+
+@app.route('/download')
+def download():
+    data_type = request.args.get('data')
+
+    if data_type == 'result':
+        filepath = '../data/result.csv'
+    else:
+        return make_response(f'Bad request ({data_type})', 400)
+
+    return send_file(filepath, mimetype='text/csv')
