@@ -50,6 +50,11 @@ def upload():
         return render_template('upload.html')
 
 
+@app.route('/search')
+def search():
+    return render_template('search.html', options=INDUSTRY_OPTIONS)
+
+
 @app.route('/run', methods=['POST'])
 def run():
     keyword = request.args.get('keyword')
