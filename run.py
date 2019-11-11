@@ -2,7 +2,7 @@ import sys
 
 from app import app
 from library.bot import Bot
-from library.analyzer import run
+from library.analyzer import Analyzer
 from library.config import Config
 
 cfg = Config()
@@ -37,10 +37,12 @@ elif sys.argv[1] == 'bot_keyword':
 
 # run analyzer
 elif sys.argv[1] == 'analyzer':
-    top_words, nmf_topic_words, lda_topic_words = run()
-    print(f'top_words:\n{top_words}\n')
-    print(f'nmf_topic_words:\n{nmf_topic_words}\n')
-    print(f'lda_topic_words:\n{lda_topic_words}')
+    analyzer_thread = Analyzer(n_components=cfg.n_components,
+                               n_features=cfg.n_features,
+                               stop_words=cfg.stop_words,
+                               n_top_words=cfg.n_top_words,
+                               n_topic_words=cfg.n_topic_words)
+    analyzer_thread.run()
 
 else:
     print_help()

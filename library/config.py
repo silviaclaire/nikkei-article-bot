@@ -42,5 +42,25 @@ class Config:
         return self.parser.getint('bot', 'max_article')
 
     @property
+    def n_components(self) -> int:
+        return self.parser.getint('analyzer', 'n_components')
+
+    @property
+    def n_features(self) -> int:
+        return self.parser.getint('analyzer', 'n_features')
+
+    @property
+    def stop_words(self) -> list:
+        return self.parser.get('analyzer', 'stop_words').split(',')
+
+    @property
+    def n_top_words(self) -> int:
+        return self.parser.getint('analyzer', 'n_top_words')
+
+    @property
+    def n_topic_words(self) -> int:
+        return self.parser.getint('analyzer', 'n_topic_words')
+
+    @property
     def port(self) -> int:
         return self.parser.getint('app', 'port')
