@@ -1,21 +1,16 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import pickle
 import sqlite3
 import numpy as np
 import pandas as pd
-from time import time
 
 import MeCab
-import pyLDAvis
-from pyLDAvis import sklearn as sklearn_lda
 from sklearn.decomposition import NMF, LatentDirichletAllocation
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 
 n_components = 5  # number of topics
 n_features = 1000
 n_top_words = 20
+n_topic_words = 20
 
 stop_words = [
     'ai',
@@ -39,11 +34,8 @@ stop_words = [
 
 
 def load_dataset():
-    print('Loading dataset...', end=' ')
-    t0 = time()
     with sqlite3.connect('data/press_release.db') as conn:
         df = pd.read_sql_query('SELECT id, title, content FROM articles', conn)
-    print('done in %0.3fs.' % (time() - t0))
 
     n_samples = len(df)
     data = df['content']
@@ -52,11 +44,10 @@ def load_dataset():
 
 
 def tokenize(text):
-
-    text = text.lower()
+    text = str(text).lower()
 
     m = MeCab.Tagger(' -d /home/yan/projects/nikkei_article_bot/nikkei_article_bot/env/lib/mecab-ipadic-neologd/')
-    words = m.parse(str(text))
+    words = m.parse(text)
 
     clean_tokens = []
     for row in words.split('\n'):
@@ -82,98 +73,88 @@ def tokenize(text):
 
 def vectorize(data, n_features):
     # Use tf-idf features for NMF.
-    print('Extracting tf-idf features...', end=' ')
     tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2,
-                                    max_features=n_features,
-                                    tokenizer=tokenize)
-    t0 = time()
+                                       max_features=n_features,
+                                       tokenizer=tokenize)
     tfidf = tfidf_vectorizer.fit_transform(data)
-    print('done in %0.3fs.' % (time() - t0))
 
     # Use tf (raw term count) features for LDA.
-    print('Extracting tf features...', end=' ')
     tf_vectorizer = CountVectorizer(max_df=0.95, min_df=2,
                                     max_features=n_features,
                                     tokenizer=tokenize)
-    t0 = time()
     tf = tf_vectorizer.fit_transform(data)
-    print('done in %0.3fs.' % (time() - t0))
     return tfidf, tfidf_vectorizer, tf, tf_vectorizer
 
 
-def n_most_common_words(tf, tf_vectorizer, n=10):
+def get_top_words(tf, tf_vectorizer, n_top_words):
     words = tf_vectorizer.get_feature_names()
-
     total_counts = np.zeros(len(words))
     for t in tf:
         total_counts+=t.toarray()[0]
-
-    count_dict = (zip(words, total_counts))
-    count_dict = sorted(count_dict, key=lambda x:x[1], reverse=True)[0:n]
-    print(f'top words: {count_dict}')
+    top_words = sorted((zip(words, total_counts)), key=lambda x:x[1], reverse=True)[0:n_top_words]
+    return top_words
 
 
-def print_top_words(model, feature_names, n_top_words):
-    for topic_idx, topic in enumerate(model.components_):
-        message = 'Topic #%d: ' % topic_idx
-        message += ' '.join([feature_names[i] for i in topic.argsort()[:-n_top_words - 1:-1]])
-        print(message)
-    print()
+def get_topic_words(model, feature_names, n_topic_words):
+    df = pd.DataFrame(columns=['topic_words'])
+    for idx, topic in enumerate(model.components_):
+        topic_words = ';'.join([feature_names[i] for i in topic.argsort()[:-n_topic_words-1:-1]])
+        df.loc[idx] = topic_words
+    return df
 
 
-def save_visualization(LDAvis_data):
-    filepath = f'data/ldavis_{n_components}.pkl'
+def save_as_pickle(model, filepath):
     with open(filepath, 'wb') as f:
-        pickle.dump(LDAvis_data, f)
-
-    filepath = f'data/ldavis_{n_components}.html'
-    pyLDAvis.save_html(LDAvis_data, filepath)
+        pickle.dump(model, f)
 
 
-def load_visualization(filepath):
+def load_pickle(filepath):
     with open(filepath, 'rb') as f:
-        LDAvis_data = pickle.load(f)
-    return LDAvis_data
+        model = pickle.load(f)
+    return model
 
 
-if __name__ == '__main__':
-
-    print()
+def run():
+    # load dataset
     n_samples, data = load_dataset()
 
     # vectorize data
     tfidf, tfidf_vectorizer, tf, tf_vectorizer = vectorize(data, n_features)
-    print(f'stop words: {stop_words}')
 
-    # print n most common words
-    n_most_common_words(tf, tf_vectorizer, n=10)
-
-    print()
+    # get top words overall
+    top_words = get_top_words(tf, tf_vectorizer, n_top_words)
 
     # Fit the NMF model
-    print('Fitting the NMF model (Frobenius norm) with tf-idf features, '
-        'n_samples=%d and n_features=%d...' % (n_samples, n_features), end=' ')
-    t0 = time()
-    nmf = NMF(n_components=n_components, random_state=1,
-            alpha=.1, l1_ratio=.5).fit(tfidf)
-    print('done in %0.3fs.' % (time() - t0))
+    nmf = NMF(n_components=n_components,
+              random_state=1,
+              alpha=.1,
+              l1_ratio=.5)
+    nmf.fit(tfidf)
+    # save
+    save_as_pickle(tfidf_vectorizer, 'data/nmf_tfidf_vectorizer.pkl')
+    save_as_pickle(nmf, 'data/nmf_model.pkl')
+    # load
+    tfidf_vectorizer = load_pickle('data/nmf_tfidf_vectorizer.pkl')
+    nmf = load_pickle('data/nmf_model.pkl')
+    # get top words per topic
     tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-    print_top_words(nmf, tfidf_feature_names, n_top_words)
+    nmf_topic_words = get_topic_words(nmf, tfidf_feature_names, n_topic_words)
 
     # Fit the LDA model
-    print('Fitting LDA models with tf features, n_samples=%d and n_features=%d...'
-        % (n_samples, n_features), end=' ')
-    lda = LatentDirichletAllocation(n_components=n_components, max_iter=5,
+    lda = LatentDirichletAllocation(n_components=n_components,
+                                    max_iter=5,
                                     learning_method='online',
                                     learning_offset=50.,
                                     random_state=0)
-    t0 = time()
     lda.fit(tf)
-    print('done in %0.3fs.' % (time() - t0))
+    # save
+    save_as_pickle(tf_vectorizer, 'data/lda_tf_vectorizer.pkl')
+    save_as_pickle(lda, 'data/lda_model.pkl')
+    # load
+    tf_vectorizer = load_pickle('data/lda_tf_vectorizer.pkl')
+    lda = load_pickle('data/lda_model.pkl')
+    # get top words per topic
     tf_feature_names = tf_vectorizer.get_feature_names()
-    print_top_words(lda, tf_feature_names, n_top_words)
+    lda_topic_words = get_topic_words(lda, tf_feature_names, n_topic_words)
 
-    # visualization
-    LDAvis_data = sklearn_lda.prepare(lda, tf, tf_vectorizer)
-    save_visualization(LDAvis_data)
-    print('\nVisualization saved')
+    return top_words, nmf_topic_words, lda_topic_words
