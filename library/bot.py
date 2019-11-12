@@ -107,6 +107,9 @@ class Bot(threading.Thread):
             else:
                 urls = get_urls_from_search(keyword=self.keyword, industry=self.industry)
 
+            if len(urls) == 0:
+                raise Exception('Urls not found')
+
             for i, url in enumerate(urls):
 
                 # break if exceeding max_article
