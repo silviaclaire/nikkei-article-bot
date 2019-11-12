@@ -73,13 +73,16 @@ class Bot(threading.Thread):
             article['link'] = url.split('?')[0]
             # date
             article['date'] = soup.find('dl', 'cmn-article_status').find('dd', 'cmnc-publish').text.strip()
-            # company, industry
-            # use the first category description only
-            ele = soup.find('dd', 'm-pressRelease_Product_category_description')
-            if ele:
-                article['company'], article['industry'] = [e.text.strip() for e in ele.find_all('a')]
+            # industry
+            if self.industry:
+                article['industry'] = INDUSTRY_OPTIONS[self.industry]
             else:
-                article['company'], article['industry'] = [None, None]
+                # use the first category description only
+                ele = soup.find('dd', 'm-pressRelease_Product_category_description')
+                if ele:
+                    article['industry'] = [e.text.strip() for e in ele.find_all('a')][1]
+                else:
+                    article['industry'] = None
             # content
             p_list = [e.text.strip() for e in soup.find('div', 'cmn-article_text').find_all('p')]
             article['content'] = self._clean_content(p_list)

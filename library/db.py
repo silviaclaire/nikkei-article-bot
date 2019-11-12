@@ -20,7 +20,6 @@ class DatabaseClient:
                        title TEXT NOT NULL,
                        link TEXT NOT NULL,
                        date TEXT,
-                       company TEXT,
                        industry TEXT,
                        content TEXT NOT NULL)
                       ''')
@@ -29,5 +28,5 @@ class DatabaseClient:
     def insert_record(self, article):
         with sqlite3.connect(self.db_filepath) as conn:
             c = conn.cursor()
-            c.execute('INSERT INTO articles VALUES (NULL,?,?,?,?,?,?)', tuple(article.values()))
+            c.execute('INSERT INTO articles VALUES (NULL,?,?,?,?,?)', tuple(article.values()))
             conn.commit()
