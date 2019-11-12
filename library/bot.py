@@ -70,7 +70,7 @@ class Bot(threading.Thread):
             # title
             article['title'] = soup.find('h1', 'cmn-article_title').find('span', 'JSID_key_fonthln').text.strip()
             # url
-            article['link'] = url
+            article['link'] = url.split('?')[0]
             # date
             article['date'] = soup.find('dl', 'cmn-article_status').find('dd', 'cmnc-publish').text.strip()
             # company, industry
