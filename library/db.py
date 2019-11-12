@@ -1,13 +1,9 @@
-import os
 import sqlite3
 
 
 class DatabaseClient:
     def __init__(self, db_filepath):
         self.db_filepath = db_filepath
-        # remove old db file if exists
-        if os.path.exists(self.db_filepath):
-            os.remove(self.db_filepath)
         # create articles table
         self._create_table()
 
