@@ -1,9 +1,7 @@
 import pickle
-import sqlite3
 import traceback
 import threading
 import numpy as np
-import pandas as pd
 
 import MeCab
 from sklearn.decomposition import NMF, LatentDirichletAllocation
@@ -11,6 +9,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 
 from library.constants import *
 from library.config import Config
+from library.db import DatabaseClient
 
 # read config
 cfg = Config()
@@ -18,6 +17,7 @@ cfg = Config()
 
 class Analyzer(threading.Thread):
     def __init__(self,
+                 sql_query:str,
                  n_components:int,
                  n_features:int,
                  stop_words:list,
@@ -29,6 +29,7 @@ class Analyzer(threading.Thread):
         self.status = AnalyzerStatus.IDLE
         self._stop = threading.Event()
         # params used in analyzing
+        self.sql_query = sql_query
         self.n_components = n_components
         self.n_features = n_features
         self.stop_words = stop_words
@@ -44,13 +45,6 @@ class Analyzer(threading.Thread):
 
     def stopped(self):
         return self._stop.isSet()
-
-    @staticmethod
-    def load_dataset(db_filepath, col='content'):
-        with sqlite3.connect(db_filepath) as conn:
-            df = pd.read_sql_query('SELECT id, title, content FROM articles', conn)
-        data = df[col]
-        return data
 
     def tokenize(self, text):
         text = str(text).lower()
@@ -129,8 +123,11 @@ class Analyzer(threading.Thread):
         self.status = AnalyzerStatus.PROCESSING
 
         try:
+            # initialize db
+            db_client = DatabaseClient(cfg.db_filepath)
+
             # load dataset
-            data = self.load_dataset(cfg.db_filepath)
+            data = db_client.load_dataset(sql_query=self.sql_query)
             print(f'n_samples:{len(data)}')
             if self.stopped():
                 return

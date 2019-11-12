@@ -37,7 +37,8 @@ elif sys.argv[1] == 'bot_keyword':
 
 # run analyzer
 elif sys.argv[1] == 'analyzer':
-    analyzer_thread = Analyzer(n_components=cfg.n_components,
+    analyzer_thread = Analyzer(sql_query=cfg.sql_query,
+                               n_components=cfg.n_components,
                                n_features=cfg.n_features,
                                stop_words=cfg.stop_words,
                                n_top_words=cfg.n_top_words,

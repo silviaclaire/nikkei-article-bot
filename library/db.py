@@ -1,4 +1,5 @@
 import sqlite3
+import pandas as pd
 
 
 class DatabaseClient:
@@ -26,3 +27,9 @@ class DatabaseClient:
             c = conn.cursor()
             c.execute('INSERT INTO articles VALUES (NULL,?,?,?,?,?)', tuple(article.values()))
             conn.commit()
+
+    def load_dataset(self, sql_query):
+        with sqlite3.connect(self.db_filepath) as conn:
+            df = pd.read_sql_query(sql_query, conn)
+        data = df['content']
+        return data

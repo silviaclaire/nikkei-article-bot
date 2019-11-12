@@ -42,6 +42,10 @@ class Config:
         return self.parser.getint('bot', 'max_article')
 
     @property
+    def sql_query(self) -> str:
+        return self.parser.get('analyzer', 'sql_query')
+
+    @property
     def n_components(self) -> int:
         return self.parser.getint('analyzer', 'n_components')
 
