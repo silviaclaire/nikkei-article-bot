@@ -18,14 +18,12 @@ INDUSTRY_OPTIONS = {
 
 MECAB_DICTIONARY_PATH = ' -d /home/yan/projects/nikkei_article_bot/nikkei_article_bot/env/lib/mecab-ipadic-neologd/'
 
-class BotStatus:
-    IDLE = 'IDLE'
-    PROCESSING = 'SCRAWLING'
-    COMPLETE = 'COMPLETE'
-    ERROR = 'ERROR'
 
-class AnalyzerStatus:
+class BotAnalyzerStatus:
     IDLE = 'IDLE'
-    PROCESSING = 'ANALYZING'
+    INITIALIZING = 'INITIALIZING'
+    SCRAWLING = 'SCRAWLING'
+    ANALYZING = 'ANALYZING'
+    PROCESSING = [INITIALIZING, SCRAWLING, ANALYZING]
     COMPLETE = 'COMPLETE'
     ERROR = 'ERROR'

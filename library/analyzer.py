@@ -1,6 +1,4 @@
 import pickle
-import traceback
-import threading
 import numpy as np
 
 import MeCab
@@ -15,7 +13,7 @@ from library.db import DatabaseClient
 cfg = Config()
 
 
-class Analyzer(threading.Thread):
+class Analyzer:
     def __init__(self,
                  sql_query:str,
                  n_components:int,
@@ -23,28 +21,12 @@ class Analyzer(threading.Thread):
                  stop_words:list,
                  n_top_words:int,
                  n_topic_words:int):
-        super().__init__()
-        # params used in threading/responding
-        self.progress = 0
-        self.status = AnalyzerStatus.IDLE
-        self._stop = threading.Event()
-        # params used in analyzing
         self.sql_query = sql_query
         self.n_components = n_components
         self.n_features = n_features
         self.stop_words = stop_words
         self.n_top_words = n_top_words
         self.n_topic_words = n_topic_words
-
-    def stop(self):
-        # reset analyzer
-        self.progress = 0
-        self.status = AnalyzerStatus.IDLE
-        # set event
-        self._stop.set()
-
-    def stopped(self):
-        return self._stop.isSet()
 
     def tokenize(self, text):
         text = str(text).lower()
@@ -118,44 +100,34 @@ class Analyzer(threading.Thread):
             topic_words = self.get_topic_words(model=lda, feature_names=self.tf_vectorizer.get_feature_names())
         return topic_words
 
-    def run(self):
-        # run analyzer
-        self.status = AnalyzerStatus.PROCESSING
+    def run(self, db_client=None):
 
-        try:
+        if db_client is None:
             # initialize db
             db_client = DatabaseClient(cfg.db_filepath)
 
-            # load dataset
-            data = db_client.load_dataset(sql_query=self.sql_query)
-            print(f'n_samples:{len(data)}')
-            if self.stopped():
-                return
+        # load dataset
+        data = db_client.load_dataset(sql_query=self.sql_query)
+        print(f'n_samples:{len(data)}')
 
-            # vectorize data
-            self.vectorize(data)
-            if self.stopped():
-                return
+        # vectorize data
+        self.vectorize(data)
 
-            # get top words overall
-            top_words = self.get_top_words()
-            print(f'top words:\n{top_words}')
-            if self.stopped():
-                return
+        # get top words overall
+        top_words = self.get_top_words()
+        print(f'top words:\n{top_words}')
 
-            # fit model to get topic words
-            topic_words = {}
-            for model_type in ['nmf', 'lda']:
-                topic_words[model_type] = self.fit_model(model_type)
-                print(f'topic words ({model_type}):\n{topic_words[model_type]}')
-                if self.stopped():
-                    return
+        # get top words per topic
+        topic_words = {}
 
-        except Exception as err:
-            print(traceback.format_exc())
-            self.error = err
-            self.status = AnalyzerStatus.ERROR
+        for model_type in ['nmf', 'lda']:
 
-        else:
-            self.result = dict(top_words=top_words, topic_words=topic_words)
-            self.status = AnalyzerStatus.COMPLETE
+            # fit model
+            topic_words[model_type] = self.fit_model(model_type)
+
+            # print results
+            print(f'topic words ({model_type}):')
+            for idx, topic_str in enumerate([' '.join(a_topic) for a_topic in topic_words[model_type]]):
+                print(f'#{idx}: {topic_str}')
+
+        return top_words, topic_words

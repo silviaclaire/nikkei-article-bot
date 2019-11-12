@@ -3,7 +3,6 @@ import re
 import random
 import requests
 import traceback
-import threading
 from time import sleep
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
@@ -17,27 +16,12 @@ from library.utils import get_urls_from_file, get_urls_from_search
 cfg = Config()
 
 
-class Bot(threading.Thread):
+class Bot:
     def __init__(self, keyword, industry, csv_filepath):
-        super().__init__()
-        # params used in threading/responding
-        self.progress = 0
-        self.status = BotStatus.IDLE
-        self._stop = threading.Event()
-        # params used in crawling
         self.keyword = keyword
         self.industry = industry
         self.csv_filepath = csv_filepath
-
-    def stop(self):
-        # reset bot
         self.progress = 0
-        self.status = BotStatus.IDLE
-        # set event
-        self._stop.set()
-
-    def stopped(self):
-        return self._stop.isSet()
 
     @staticmethod
     def _clean_content(p_list):
@@ -92,72 +76,48 @@ class Bot(threading.Thread):
 
         return article
 
-    def run(self):
+    def run(self, urls=None, db_client=None):
 
-        # run bot
-        self.status = BotStatus.PROCESSING
-
-        try:
+        if db_client is None:
             # initialize db
             db_client = DatabaseClient(cfg.db_filepath)
 
+        if urls is None:
             # get urls
-            if self.csv_filepath is not None:
+            if self.csv_filepath:
                 urls = get_urls_from_file(self.csv_filepath)
             else:
                 urls = get_urls_from_search(keyword=self.keyword, industry=self.industry)
 
-            if len(urls) == 0:
-                raise Exception('Urls not found')
+        if len(urls) == 0:
+            raise Exception('Urls not found')
 
-            for i, url in enumerate(urls):
+        for i, url in enumerate(urls):
 
-                # break if exceeding max_article
-                if cfg.max_article and i >= cfg.max_article:
-                    break
+            # break if exceeding max_article
+            if cfg.max_article and i >= cfg.max_article:
+                break
 
-                # set random request interval 0.5s~2s
-                sleep(round(random.uniform(0.5, 2), 1))
+            # set random request interval 0.5s~2s
+            sleep(round(random.uniform(0.5, 2), 1))
 
-                if self.stopped():
-                    return
+            # scrawl article
+            article = self._scrawl_page(url)
 
-                # scrawl article
-                article = self._scrawl_page(url)
+            # skip to next article if failed
+            if article is None:
+                print(f"fail: {i+1}/{len(urls)} ({url})")
+                continue
 
-                # skip to next article if failed
-                if article is None:
-                    print(f"fail: {i+1}/{len(urls)} ({url})")
-                    continue
+            # insert a record
+            db_client.insert_record(article)
 
-                if self.stopped():
-                    return
+            print(f"done: {i+1}/{len(urls)} ({article['title']})")
 
-                # insert a record
-                db_client.insert_record(article)
+            # calculate current progress
+            if cfg.max_article:
+                self.progress = round((i+1)/cfg.max_article*100, 1)
+            else:
+                self.progress = round((i+1)/len(urls)*100, 1)
 
-                print(f"done: {i+1}/{len(urls)} ({article['title']})")
-
-                # calculate current progress
-                if cfg.max_article:
-                    self.progress = round((i+1)/cfg.max_article*100, 1)
-                else:
-                    self.progress = round((i+1)/len(urls)*100, 1)
-
-                if self.stopped():
-                    return
-
-        except Exception as err:
-            self.error = err
-            self.status = BotStatus.ERROR
-
-        else:
-            # ! dummy
-            self.result = {
-                '#0': ['最大化', '顧客', '体験', '価値'],
-                '#1': ['農業', '環境', '栽培', '省資源'],
-                '#2': ['最大化', '顧客', '体験', '価値'],
-                '#3': ['農業', '環境', '栽培', '省資源'],
-            }
-            # ! dummy
-            self.status = BotStatus.COMPLETE
+            yield self.progress
