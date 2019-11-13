@@ -83,7 +83,7 @@ class BotAnalyzer(threading.Thread):
                                 stop_words=self.stop_words,
                                 n_top_words=self.n_top_words,
                                 n_topic_words=self.n_topic_words)
-            top_words, topic_words = analyzer.run(db_client)
+            top_words, topic_words, html_filepath = analyzer.run(db_client)
 
         except Exception as err:
             self.error = err
@@ -91,5 +91,5 @@ class BotAnalyzer(threading.Thread):
             self.status = BotAnalyzerStatus.ERROR
 
         else:
-            self.result = dict(top_words=top_words, topic_words=topic_words)
+            self.result = dict(top_words=top_words, topic_words=topic_words, html_filepath=html_filepath)
             self.status = BotAnalyzerStatus.COMPLETE

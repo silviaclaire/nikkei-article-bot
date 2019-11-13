@@ -2,6 +2,8 @@ import pickle
 import numpy as np
 
 import MeCab
+import pyLDAvis
+from pyLDAvis import sklearn as sklearn_lda
 from sklearn.decomposition import NMF, LatentDirichletAllocation
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 
@@ -54,13 +56,13 @@ class Analyzer:
     def vectorize(self, data):
         # Use tf-idf features for NMF.
         self.tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2,
-                                           max_features=self.n_features,
-                                           tokenizer=self.tokenize)
+                                                max_features=self.n_features,
+                                                tokenizer=self.tokenize)
         self.tfidf = self.tfidf_vectorizer.fit_transform(data)
         # Use tf (raw term count) features for LDA.
         self.tf_vectorizer = CountVectorizer(max_df=0.95, min_df=2,
-                                        max_features=self.n_features,
-                                        tokenizer=self.tokenize)
+                                             max_features=self.n_features,
+                                             tokenizer=self.tokenize)
         self.tf = self.tf_vectorizer.fit_transform(data)
 
     def get_top_words(self):
@@ -81,29 +83,41 @@ class Analyzer:
         assert model_type in ['nmf', 'lda'], f'Wrong model type ({model_type})'
         if model_type == 'nmf':
             # fit model
-            nmf = NMF(n_components=self.n_components,
-                      random_state=1,
-                      alpha=.1,
-                      l1_ratio=.5)
-            nmf.fit(self.tfidf)
+            model = NMF(n_components=self.n_components,
+                        random_state=1,
+                        alpha=.1,
+                        l1_ratio=.5)
+            model.fit(self.tfidf)
             # get top words per topic
-            topic_words = self.get_topic_words(model=nmf, feature_names=self.tfidf_vectorizer.get_feature_names())
+            topic_words = self.get_topic_words(model=model,
+                                               feature_names=self.tfidf_vectorizer.get_feature_names())
         elif model_type == 'lda':
             # fit model
-            lda = LatentDirichletAllocation(n_components=self.n_components,
-                                            max_iter=5,
-                                            learning_method='online',
-                                            learning_offset=50.,
-                                            random_state=0)
-            lda.fit(self.tf)
+            model = LatentDirichletAllocation(n_components=self.n_components,
+                                              max_iter=5,
+                                              learning_method='online',
+                                              learning_offset=50.,
+                                              random_state=0)
+            model.fit(self.tf)
             # get top words per topic
-            topic_words = self.get_topic_words(model=lda, feature_names=self.tf_vectorizer.get_feature_names())
-        return topic_words
+            topic_words = self.get_topic_words(model=model,
+                                               feature_names=self.tf_vectorizer.get_feature_names())
+        return model, topic_words
+
+    def save_visualization(self, model, model_type):
+        if model_type == 'lda':
+            ldavis_result = sklearn_lda.prepare(model, self.tf, self.tf_vectorizer)
+            html_filepath = f'data/ldavis_result.html'
+            pyLDAvis.save_html(ldavis_result, html_filepath)
+        else:
+            # TODO: create visualization for nmf model
+            html_filepath = 'data/hoge.html'
+        return html_filepath
 
     def run(self, db_client=None):
 
+        # initialize db
         if db_client is None:
-            # initialize db
             db_client = DatabaseClient(cfg.db_filepath)
 
         # load dataset
@@ -117,17 +131,18 @@ class Analyzer:
         top_words = self.get_top_words()
         print(f'top words:\n{top_words}')
 
-        # get top words per topic
+        models = {}
         topic_words = {}
 
         for model_type in ['nmf', 'lda']:
-
             # fit model
-            topic_words[model_type] = self.fit_model(model_type)
-
-            # print results
+            models[model_type], topic_words[model_type] = self.fit_model(model_type)
+            # print top words per topic
             print(f'topic words ({model_type}):')
             for idx, topic_str in enumerate([' '.join(a_topic) for a_topic in topic_words[model_type]]):
                 print(f'#{idx}: {topic_str}')
+            # save visualization
+            html_filepath = self.save_visualization(models[model_type], model_type)
+            print(f'visualization saved to {html_filepath}')
 
-        return top_words, topic_words
+        return top_words, topic_words, html_filepath
