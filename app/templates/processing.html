@@ -31,8 +31,12 @@
         let requestUrl = "/status"
         $.get(requestUrl, (res)=>{
             console.log(res)
-            if (res.status == "SCRAWLING") {
+            if (res.status == "INITIALIZING") {
+                $("#msgProgress").text(`Initializing...`)
+            } else if (res.status == "SCRAWLING") {
                 $("#msgProgress").text(`Scrawling articles...${res.progress}%`)
+            } else if (res.status == "ANALYZING") {
+                $("#msgProgress").text(`Analyzing articles...`)
             } else {
                 clearInterval(timer)
                 if (!userStop) {

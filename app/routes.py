@@ -1,17 +1,29 @@
 from app import app
 
 import os
-from werkzeug.utils import secure_filename
+import traceback
 from flask import Flask, render_template, make_response, flash, request, redirect, url_for, send_file
 
-from library.bot import Bot
 from library.constants import *
+from library.config import Config
+from library.bot_analyzer import BotAnalyzer
 
 
-UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
+# read config
+cfg = Config()
 
 # glocal control thread for bot
-bot_thread = None
+bot_analyzer = None
+
+
+DEFAULT_VALUES = {
+    'sql_query': cfg.sql_query,
+    'n_components': cfg.n_components,
+    'n_features': cfg.n_features,
+    'stop_words': cfg.stop_words,
+    'n_top_words': cfg.n_top_words,
+    'n_topic_words': cfg.n_topic_words,
+}
 
 
 @app.route('/')
@@ -19,96 +31,81 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        # check if request has the file part
-        if 'file' not in request.files:
-            flash('No file part in request', category='warning')
-            return make_response(render_template('upload.html'), 400)
-
-        # check if file selected
-        f = request.files['file']
-        if not f or f.filename == '':
-            flash('No selected file', category='warning')
-            return make_response(render_template('upload.html'), 400)
-
-        # check file type
-        if f.filename.split('.')[-1].lower() != 'csv':
-            flash(f'Must be a csv file ({f.filename})', category='warning')
-            return make_response(render_template('upload.html'), 400)
-
-        # save file
-        filename = secure_filename(f.filename)
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-        f.save(filepath)
-        flash(f'Uploaded ({filename})', category='success')
-
-        return render_template('upload.html', filename=filename)
-
-    else:
-        return render_template('upload.html')
-
-
-@app.route('/search')
-def search():
-    return render_template('search.html', options=INDUSTRY_OPTIONS)
-
+@app.route('/settings')
+def settings():
+    return render_template('settings.html',
+                           industry_options=INDUSTRY_OPTIONS,
+                           default_values=DEFAULT_VALUES)
 
 @app.route('/run', methods=['POST'])
 def run():
-    keyword = request.args.get('keyword')
-    industry = request.args.get('industry')
-    filename = request.args.get('filename')
+    try:
+        keyword = request.form.get('keyword', default=cfg.keyword, type=str)
+        industry = request.form.get('industry', default=cfg.industry, type=int)
+        csv_filepath = None
+        sql_query = request.form.get('sql_query', default=cfg.sql_query, type=str)
+        n_components = request.form.get('n_components', default=cfg.n_components, type=int)
+        n_features = request.form.get('n_features', default=cfg.n_features, type=int)
+        stop_words = request.form.get('stop_words', default=cfg.stop_words, type=str)
+        if type(stop_words) is str:
+            stop_words = stop_words.split(',')
+        n_top_words = request.form.get('n_top_words', default=cfg.n_top_words, type=int)
+        n_topic_words = request.form.get('n_topic_words', default=cfg.n_topic_words, type=int)
+        if n_components < 0:
+            raise ValueError('less than zero')
+    except Exception as err:
+        flash(err, category='warning')
+        return make_response(render_template('settings.html', industry_options=INDUSTRY_OPTIONS, default_values=DEFAULT_VALUES), 400)
 
-    if not (filename or all([keyword, industry])):
-        return render_template('error.html', error=f'Not enough args ({list(request.args)})')
-
-    global bot_thread
+    global bot_analyzer
 
     # if still processing
-    if bot_thread and bot_thread.status == BotStatus.PROCESSING:
-        return render_template('error.html', error=f'Still processing')
+    if (bot_analyzer) and (bot_analyzer.status in BotAnalyzerStatus.PROCESSING):
+        return render_template('error.html', error=bot_analyzer.status), 400
 
-    if filename:
-        # run urls in file
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-        bot_thread = Bot(keyword=None, industry=None, csv_filepath=filepath)
-    else:
-        # run urls via search
-        bot_thread = Bot(keyword=keyword, industry=industry, csv_filepath=None)
+    # initialize and run bot_analyzer
+    bot_analyzer = BotAnalyzer(keyword=keyword,
+                               industry=industry,
+                               csv_filepath=csv_filepath,
+                               sql_query=sql_query,
+                               n_components=n_components,
+                               n_features=n_features,
+                               stop_words=stop_words,
+                               n_top_words=n_top_words,
+                               n_topic_words=n_topic_words,
+                               )
+    bot_analyzer.setDaemon(True)
+    bot_analyzer.start()
 
-    bot_thread.setDaemon(True)
-    bot_thread.start()
-
-    return redirect(url_for('result'))
+    return render_template('processing.html')
 
 
 @app.route('/stop')
 def stop():
-    if bot_thread:
-        bot_thread.stop()
+    if bot_analyzer:
+        bot_analyzer.stop()
     return redirect(url_for('result', result=None))
 
 
 @app.route('/status')
 def status():
-    if bot_thread:
-        return make_response({'status': bot_thread.status, 'progress': bot_thread.progress})
+    if bot_analyzer:
+        return make_response({'status': bot_analyzer.status, 'progress': bot_analyzer.progress})
     return redirect(url_for('result', result=None))
 
 
 @app.route('/result')
 def result():
-    if bot_thread is None or bot_thread.status == BotStatus.IDLE:
+    if bot_analyzer is None or bot_analyzer.status == BotAnalyzerStatus.IDLE:
         return render_template('result.html', result=None)
-    elif bot_thread.status == BotStatus.PROCESSING:
+    elif bot_analyzer.status in BotAnalyzerStatus.PROCESSING:
         return render_template('processing.html')
-    elif bot_thread.status == BotStatus.COMPLETE:
-        return render_template('result.html', result=bot_thread.result)
+    elif bot_analyzer.status == BotAnalyzerStatus.COMPLETE:
+        return render_template('result.html', result=bot_analyzer.result)
+    elif bot_analyzer.status == BotAnalyzerStatus.ERROR:
+        return render_template('error.html', error=bot_analyzer.error, traceback=bot_analyzer.traceback), 500
     else:
-        return render_template('error.html', error=bot_thread.error)
-
+        return make_response(f'Unhandled status ({bot_analyzer.status})', 500)
 
 @app.route('/download')
 def download():

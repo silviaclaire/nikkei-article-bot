@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+
+{% block head %}
+
+<style>
+    .card {
+        width: 100%;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<!-- alert message -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    <strong>{{ category }}:</strong> {{ message }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- input form -->
+<form method="post" action="/run" enctype="multipart/form-data">
+    <!-- search conditions -->
+    <div class="card mt-2">
+        <div class="card-body">
+            <h5 class="card-title">Search Conditions</h5>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="keyword">keyword</label>
+                    <input id="keyword" name="keyword" type="search" class="form-control">
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="industry">industry</label>
+                    <select id="industry" name="industry" class="form-control">
+                        <option value="0" selected>{{ industry_options[0] }}</option>
+                        {% for key, val in industry_options.items() %}
+                        <option value="{{ key }}">{{ val }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- analyzation params -->
+    <div class="card mt-2">
+        <div class="card-body">
+            <h5 class="card-title">Analyzation Params</h5>
+            <div class="form-group">
+                <label for="sql_query">sql_query</label>
+                <textarea id="sql_query" name="sql_query" rows="3" class="form-control">{{ default_values['sql_query'] }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="stop_words">stop_words</label>
+                <textarea id="stop_words" name="stop_words" rows="3" class="form-control">{{ default_values['stop_words'] }}</textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="n_components">n_components</label>
+                    <input id="n_components" name="n_components" type="number" class="form-control", value="{{ default_values['n_components'] }}">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="n_features">n_features</label>
+                    <input id="n_features" name="n_features" type="number" class="form-control", value="{{ default_values['n_features'] }}">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="n_top_words">n_top_words</label>
+                    <input id="n_top_words" name="n_top_words" type="number" class="form-control", value="{{ default_values['n_top_words'] }}">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="n_topic_words">n_topic_words</label>
+                    <input id="n_topic_words" name="n_topic_words" type="number" class="form-control", value="{{ default_values['n_topic_words'] }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-row">
+    </div>
+    <div class="text-center">
+        <button type="submit" class="btn btn-primary my-3">Submit</button>
+    </div>
+</form>
+
+{% endblock %}
