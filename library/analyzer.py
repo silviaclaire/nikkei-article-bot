@@ -91,6 +91,9 @@ class Analyzer:
             # get top words per topic
             topic_words = self.get_topic_words(model=model,
                                                feature_names=self.tfidf_vectorizer.get_feature_names())
+            # get topic ratios per article
+            topic_ratios = model.transform(self.tfidf)
+
         elif model_type == 'lda':
             # fit model
             model = LatentDirichletAllocation(n_components=self.n_components,
@@ -102,7 +105,10 @@ class Analyzer:
             # get top words per topic
             topic_words = self.get_topic_words(model=model,
                                                feature_names=self.tf_vectorizer.get_feature_names())
-        return model, topic_words
+            # get topic ratios per article
+            topic_ratios = model.transform(self.tf)
+
+        return model, topic_words, topic_ratios
 
     def save_visualization(self, model, model_type):
         if model_type == 'lda':
@@ -143,7 +149,7 @@ class Analyzer:
         for model_type in result['models'].keys():
 
             # fit model
-            model, topic_words = self.fit_model(model_type)
+            model, topic_words, topic_ratios = self.fit_model(model_type)
 
             # print top words per topic
             print(f'topic words ({model_type}):')
@@ -157,6 +163,7 @@ class Analyzer:
             # update result
             result['models'][model_type]['model'] = model
             result['models'][model_type]['topic_words'] = topic_words
+            result['models'][model_type]['topic_ratios'] = topic_ratios
             result['models'][model_type]['html_filepath'] = html_filepath
 
         return result
