@@ -127,22 +127,36 @@ class Analyzer:
         # vectorize data
         self.vectorize(data)
 
+        # initialize result
+        result = {
+            'top_words': None,
+            'models': {
+                'nmf': {},
+                'lda': {},
+            },
+        }
+
         # get top words overall
-        top_words = self.get_top_words()
-        print(f'top words:\n{top_words}')
+        result['top_words'] = self.get_top_words()
+        print(f"top words:\n{result['top_words']}")
 
-        models = {}
-        topic_words = {}
+        for model_type in result['models'].keys():
 
-        for model_type in ['nmf', 'lda']:
             # fit model
-            models[model_type], topic_words[model_type] = self.fit_model(model_type)
+            model, topic_words = self.fit_model(model_type)
+
             # print top words per topic
             print(f'topic words ({model_type}):')
-            for idx, topic_str in enumerate([' '.join(a_topic) for a_topic in topic_words[model_type]]):
+            for idx, topic_str in enumerate([' '.join(a_topic) for a_topic in topic_words]):
                 print(f'#{idx}: {topic_str}')
+
             # save visualization
-            html_filepath = self.save_visualization(models[model_type], model_type)
+            html_filepath = self.save_visualization(model, model_type)
             print(f'visualization saved to {html_filepath}')
 
-        return top_words, topic_words, html_filepath
+            # update result
+            result['models'][model_type]['model'] = model
+            result['models'][model_type]['topic_words'] = topic_words
+            result['models'][model_type]['html_filepath'] = html_filepath
+
+        return result
