@@ -2,7 +2,7 @@ from app import app
 
 import os
 import traceback
-from flask import Flask, render_template, make_response, flash, request, redirect, url_for, send_file
+from flask import Flask, render_template, make_response, flash, request, redirect, url_for, Response
 
 from library.constants import *
 from library.config import Config
@@ -109,11 +109,10 @@ def result():
 
 @app.route('/download')
 def download():
-    data_type = request.args.get('data')
+    filename = request.args.get('filename')
+    filepath = os.path.join('data', filename)
+    with open(filepath, 'rb') as f:
+        csv_data = f.read()
+    return Response(csv_data, mimetype='text/csv',
+                    headers={'Content-disposition':f'attachment;filename={filename}'})
 
-    if data_type == 'result':
-        filepath = '../data/result.csv'
-    else:
-        return make_response(f'Bad request ({data_type})', 400)
-
-    return send_file(filepath, mimetype='text/csv')

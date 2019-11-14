@@ -1,13 +1,104 @@
 {% extends "base.html" %}
 {% block title %}Result{% endblock %}
 
+{% block head %}
+
+<style>
+    table {
+        font-size: 0.8em;
+    }
+</style>
+
+{% endblock %}
+
 {% block content %}
 
 {% if result %}
 
-{{ result }}
+<!-- top words -->
+<div>
+    <h4>Top Words</h4>
+    <table class="table table-sm table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">word</th>
+                <th scope="col">count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for top_word in result['top_words'] %}
+            <tr>
+                <th scope="row">{{ loop.index }}</th>
+                <td>{{ top_word[0] }}</td>
+                <td>{{ top_word[1] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-<button id="btnDownload" class="btn btn-primary">Download CSV</button>
+
+{% for model_type, model_result in result['models'].items() %}
+<div>
+    <h4>{{ model_type.upper() }}</h4>
+
+    <!-- topic words -->
+    <div>
+        <h5>Topic Words</h5>
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">topic</th>
+                    <th scope="col" colspan="{{ model_result['topic_words'][0]|length }}">word</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for words in model_result['topic_words'] %}
+                <tr>
+                    <th scope="row">#{{ loop.index }}</th>
+                    {% for word in words %}
+                    <td>{{ word }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- topic ratios -->
+    <div>
+        <h5>Topic Ratios</h5>
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">article</th>
+                    {% for i in range(model_result['topic_words']|length) %}
+                    <th scope="col">topic #{{ loop.index }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for ratios in model_result['topic_ratios'] %}
+                <tr>
+                    <th scope="row">#{{ loop.index }}</th>
+                    {% for ratio in ratios %}
+                    <td>{{ ratio }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <a class="btn btn-primary" role="button" download="{{ model_result['topic_words_filename'] }}" href="{{ url_for('download', filename=model_result['topic_words_filename']) }}">Download Topic Words</a>
+        <a class="btn btn-primary" role="button" download="{{ model_result['topic_ratios_filename'] }}" href="{{ url_for('download', filename=model_result['topic_ratios_filename']) }}">Download Topic Ratios</a>
+        <a class="btn btn-primary" role="button" href="{{ url_for('static', filename=model_result['visualization_filename']) }}">Show Visualization</a>
+    </div>
+</div>
+
+{% endfor %}
 
 {% else %}
 
@@ -17,24 +108,4 @@
 
 {% endif %}
 
-{% endblock %}
-
-{% block script %}
-<script>
-
-    let requestUrl
-
-    $("#btnDownload").on("click", ()=>{
-        requestUrl = `/download?data=result`
-        $.get(requestUrl, (data)=>{
-            // use blob object to avoid href"s length limit
-            let csvData = new Blob([data], {type:"text/csv;charset=utf-8"})
-            let a = document.createElement("a")
-            a.download = `result.csv`
-            a.href = URL.createObjectURL(csvData)
-            a.click()
-        })
-    })
-
-</script>
 {% endblock %}

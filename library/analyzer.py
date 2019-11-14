@@ -1,5 +1,7 @@
+import os
 import pickle
 import numpy as np
+import pandas as pd
 
 import MeCab
 import pyLDAvis
@@ -110,15 +112,31 @@ class Analyzer:
 
         return model, topic_words, topic_ratios
 
+    def save_topic_words(self, topic_words, model_type):
+        filename = f'{model_type}_topic_words.csv'
+        df = pd.DataFrame(columns=['topic'] + [f'word #{i+1}' for i in range(len(topic_words[0]))])
+        for i, words in enumerate(topic_words):
+            df.loc[i] = [i] + list(words)
+        df.to_csv(os.path.join('data', filename), index=False, encoding='sjis')
+        return filename
+
+    def save_topic_ratios(self, topic_ratios, model_type):
+        filename = f'{model_type}_topic_ratios.csv'
+        df = pd.DataFrame(columns=['article'] + [f'topic #{i+1}' for i in range(len(topic_ratios[0]))])
+        for i, ratios in enumerate(topic_ratios):
+            df.loc[i] = [i] + list(ratios)
+        df.to_csv(os.path.join('data', filename), index=False, encoding='sjis')
+        return filename
+
     def save_visualization(self, model, model_type):
         if model_type == 'lda':
             ldavis_result = sklearn_lda.prepare(model, self.tf, self.tf_vectorizer)
-            html_filepath = f'data/ldavis_result.html'
-            pyLDAvis.save_html(ldavis_result, html_filepath)
+            filename = 'lda_visualization.html'
+            pyLDAvis.save_html(ldavis_result, os.path.join('app/static/', filename))
         else:
             # TODO: create visualization for nmf model
-            html_filepath = 'data/hoge.html'
-        return html_filepath
+            filename = 'nmf_visualization.html'
+        return filename
 
     def run(self, db_client=None):
 
@@ -151,19 +169,25 @@ class Analyzer:
             # fit model
             model, topic_words, topic_ratios = self.fit_model(model_type)
 
+            # save as csv
+            topic_words_filename = self.save_topic_words(topic_words, model_type)
+            topic_ratios_filename = self.save_topic_ratios(topic_ratios, model_type)
+
             # print top words per topic
             print(f'topic words ({model_type}):')
             for idx, topic_str in enumerate([' '.join(a_topic) for a_topic in topic_words]):
                 print(f'#{idx}: {topic_str}')
 
             # save visualization
-            html_filepath = self.save_visualization(model, model_type)
-            print(f'visualization saved to {html_filepath}')
+            visualization_filename = self.save_visualization(model, model_type)
+            print(f'visualization saved')
 
             # update result
             result['models'][model_type]['model'] = model
             result['models'][model_type]['topic_words'] = topic_words
             result['models'][model_type]['topic_ratios'] = topic_ratios
-            result['models'][model_type]['html_filepath'] = html_filepath
+            result['models'][model_type]['topic_words_filename'] = topic_words_filename
+            result['models'][model_type]['topic_ratios_filename'] = topic_ratios_filename
+            result['models'][model_type]['visualization_filename'] = visualization_filename
 
         return result
