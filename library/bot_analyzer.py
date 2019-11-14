@@ -60,20 +60,24 @@ class BotAnalyzer(threading.Thread):
             # get urls
             if self.csv_filepath:
                 urls = get_urls_from_file(self.csv_filepath)
-            else:
+            elif all([self.keyword, self.industry]):
                 urls = get_urls_from_search(keyword=self.keyword, industry=self.industry)
+            else:
+                # skip running bot
+                urls = None
             if self._stop.isSet():
                 return
 
-            # run bot
-            self.status = BotAnalyzerStatus.SCRAWLING
-            bot = Bot(keyword=self.keyword,
-                      industry=self.industry,
-                      csv_filepath=self.csv_filepath)
-            for progress in bot.run(urls, db_client):
-                self.progress = progress
-                if self._stop.isSet():
-                    return
+            if urls is not None:
+                # run bot
+                self.status = BotAnalyzerStatus.SCRAWLING
+                bot = Bot(keyword=self.keyword,
+                        industry=self.industry,
+                        csv_filepath=self.csv_filepath)
+                for progress in bot.run(urls, db_client):
+                    self.progress = progress
+                    if self._stop.isSet():
+                        return
 
             # run analyzer
             self.status = BotAnalyzerStatus.ANALYZING
