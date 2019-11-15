@@ -12,19 +12,23 @@ cfg = Config()
 def print_help():
     print(
         f'\nUsage:\n\n'
-        f'$ python run.py app\n'
+        f'$ python run.py app [PORT]\n'
         f'$ python run.py bot\n'
         f'$ python run.py analyzer\n'
         f'$ python run.py bot_analyzer\n'
     )
 
-if len(sys.argv) != 2:
+if len(sys.argv) < 2:
     print_help()
     exit(-1)
 
 # run app
 if sys.argv[1] == 'app':
-    app.run(host='0.0.0.0', port=cfg.port, debug=True)
+    try:
+        app.run(host='0.0.0.0', port=int(sys.argv[2]), debug=True)
+    except (IndexError, ValueError):
+        print_help()
+        exit(-1)
 
 # run bot
 elif sys.argv[1] == 'bot':

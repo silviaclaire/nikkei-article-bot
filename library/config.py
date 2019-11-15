@@ -64,7 +64,3 @@ class Config:
     @property
     def n_topic_words(self) -> int:
         return self.parser.getint('analyzer', 'n_topic_words')
-
-    @property
-    def port(self) -> int:
-        return self.parser.getint('app', 'port')
