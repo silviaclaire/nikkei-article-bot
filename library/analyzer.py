@@ -34,7 +34,7 @@ class Analyzer:
 
     def tokenize(self, text):
         text = str(text).lower()
-        m = MeCab.Tagger(MECAB_DICTIONARY_PATH)
+        m = MeCab.Tagger(cfg.mecab_dictionary_path)
         words = m.parse(text)
         clean_tokens = []
         for row in words.split('\n'):

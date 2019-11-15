@@ -34,14 +34,6 @@ class Config:
         return self.parser.get('bot', 'csv_filepath')
 
     @property
-    def db_filepath(self) -> str:
-        return self.parser.get('bot', 'db_filepath')
-
-    @property
-    def max_article(self) -> int:
-        return self.parser.getint('bot', 'max_article')
-
-    @property
     def sql_query(self) -> str:
         return self.parser.get('analyzer', 'sql_query')
 
@@ -64,3 +56,15 @@ class Config:
     @property
     def n_topic_words(self) -> int:
         return self.parser.getint('analyzer', 'n_topic_words')
+
+    @property
+    def db_filepath(self) -> str:
+        return self.parser.get('developer', 'db_filepath')
+
+    @property
+    def max_article(self) -> int:
+        return self.parser.getint('developer', 'max_article')
+
+    @property
+    def mecab_dictionary_path(self) -> str:
+        return self.parser.get('developer', 'mecab_dictionary_path')

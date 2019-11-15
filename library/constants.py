@@ -16,8 +16,6 @@ INDUSTRY_OPTIONS = {
     14: '商社・サービス',
 }
 
-MECAB_DICTIONARY_PATH = ' -d /home/yan/projects/nikkei_article_bot/nikkei_article_bot/env/lib/mecab-ipadic-neologd/'
-
 
 class BotAnalyzerStatus:
     IDLE = 'IDLE'
