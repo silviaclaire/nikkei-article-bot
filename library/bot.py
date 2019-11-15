@@ -10,17 +10,16 @@ from fake_useragent import UserAgent
 from library.constants import *
 from library.config import Config
 from library.db import DatabaseClient
-from library.utils import get_urls_from_file, get_urls_from_search
+from library.utils import get_urls_from_search
 
 # read config
 cfg = Config()
 
 
 class Bot:
-    def __init__(self, keyword, industry, csv_filepath):
+    def __init__(self, keyword, industry):
         self.keyword = keyword
         self.industry = industry
-        self.csv_filepath = csv_filepath
         self.progress = 0
 
     @staticmethod
@@ -84,10 +83,7 @@ class Bot:
 
         if urls is None:
             # get urls
-            if self.csv_filepath:
-                urls = get_urls_from_file(self.csv_filepath)
-            else:
-                urls = get_urls_from_search(keyword=self.keyword, industry=self.industry)
+            urls = get_urls_from_search(keyword=self.keyword, industry=self.industry)
 
         if len(urls) == 0:
             raise Exception('Urls not found')

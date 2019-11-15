@@ -28,7 +28,7 @@ if sys.argv[1] == 'app':
 
 # run bot
 elif sys.argv[1] == 'bot':
-    bot = Bot(keyword=cfg.keyword, industry=cfg.industry, csv_filepath=cfg.csv_filepath)
+    bot = Bot(keyword=cfg.keyword, industry=cfg.industry)
     for progress in bot.run():
         pass
 
@@ -46,7 +46,6 @@ elif sys.argv[1] == 'analyzer':
 elif sys.argv[1] == 'bot_analyzer':
     bot_analyzer = BotAnalyzer(keyword=cfg.keyword,
                                industry=cfg.industry,
-                               csv_filepath=cfg.csv_filepath,
                                sql_query=cfg.sql_query,
                                n_components=cfg.n_components,
                                n_features=cfg.n_features,

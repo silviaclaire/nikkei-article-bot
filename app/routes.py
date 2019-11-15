@@ -42,7 +42,6 @@ def run():
     try:
         keyword = request.form.get('keyword', default=cfg.keyword, type=str)
         industry = request.form.get('industry', default=cfg.industry, type=int)
-        csv_filepath = None
         sql_query = request.form.get('sql_query', default=cfg.sql_query, type=str)
         n_components = request.form.get('n_components', default=cfg.n_components, type=int)
         n_features = request.form.get('n_features', default=cfg.n_features, type=int)
@@ -66,7 +65,6 @@ def run():
     # initialize and run bot_analyzer
     bot_analyzer = BotAnalyzer(keyword=keyword,
                                industry=industry,
-                               csv_filepath=csv_filepath,
                                sql_query=sql_query,
                                n_components=n_components,
                                n_features=n_features,

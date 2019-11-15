@@ -6,7 +6,7 @@ from library.config import Config
 from library.bot import Bot
 from library.analyzer import Analyzer
 from library.db import DatabaseClient
-from library.utils import get_urls_from_file, get_urls_from_search
+from library.utils import get_urls_from_search
 
 # read config
 cfg = Config()
@@ -16,7 +16,6 @@ class BotAnalyzer(threading.Thread):
     def __init__(self,
                  keyword:str,
                  industry:int,
-                 csv_filepath:str,
                  sql_query:str,
                  n_components:int,
                  n_features:int,
@@ -32,7 +31,6 @@ class BotAnalyzer(threading.Thread):
         # params
         self.keyword = keyword
         self.industry = industry
-        self.csv_filepath = csv_filepath
         self.sql_query = sql_query
         self.n_components = n_components
         self.n_features = n_features
@@ -58,9 +56,7 @@ class BotAnalyzer(threading.Thread):
                 return
 
             # get urls
-            if self.csv_filepath:
-                urls = get_urls_from_file(self.csv_filepath)
-            elif all([self.keyword, self.industry]):
+            if all([self.keyword, self.industry]):
                 urls = get_urls_from_search(keyword=self.keyword, industry=self.industry)
             else:
                 # skip running bot
@@ -71,9 +67,7 @@ class BotAnalyzer(threading.Thread):
             if urls is not None:
                 # run bot
                 self.status = BotAnalyzerStatus.SCRAWLING
-                bot = Bot(keyword=self.keyword,
-                        industry=self.industry,
-                        csv_filepath=self.csv_filepath)
+                bot = Bot(keyword=self.keyword, industry=self.industry)
                 for progress in bot.run(urls, db_client):
                     self.progress = progress
                     if self._stop.isSet():

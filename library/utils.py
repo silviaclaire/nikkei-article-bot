@@ -5,12 +5,6 @@ import urllib.parse
 from bs4 import BeautifulSoup
 
 
-def get_urls_from_file(csv_filepath):
-    with open(csv_filepath, 'r') as f:
-        urls = f.read().split()
-    return urls
-
-
 def _get_urls_per_industry(keyword, industry):
     start_url = f'https://www.nikkei.com/pressrelease/?searchKeyword={keyword}&au={industry}'
     result = requests.get(start_url)
