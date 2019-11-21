@@ -72,18 +72,24 @@
         <table class="table table-sm table-hover">
             <thead>
                 <tr>
-                    <th scope="col">article</th>
+                    <th scope="col">id</th>
+                    <th scope="col">title</th>
                     {% for i in range(model_result['topic_words']|length) %}
                     <th scope="col">topic #{{ loop.index }}</th>
                     {% endfor %}
                 </tr>
             </thead>
             <tbody>
-                {% for ratios in model_result['topic_ratios'] %}
+                {% for article_detail in model_result['topic_ratios'] %}
                 <tr>
-                    <th scope="row">#{{ loop.index }}</th>
-                    {% for ratio in ratios %}
-                    <td>{{ ratio }}</td>
+                    <th scope="row">#{{ article_detail['id'] }}</th>
+                    <td>
+                        <a href="{{ article_detail['link'] }}" target=”_blank”>{{ article_detail['title'] }}</a>
+                    </td>
+                    {% for col, value in article_detail.items() %}
+                    {% if col.startswith('topic #') %}
+                    <td>{{ value|round(5) }}</td>
+                    {% endif %}
                     {% endfor %}
                 </tr>
                 {% endfor %}

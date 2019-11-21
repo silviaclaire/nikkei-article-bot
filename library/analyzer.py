@@ -112,6 +112,13 @@ class Analyzer:
 
         return model, topic_words, topic_ratios
 
+    def create_topic_ratios_df(self, topic_ratios, data_df):
+        df = pd.DataFrame(columns=[f'topic #{i+1}' for i in range(len(topic_ratios[0]))])
+        for i, ratios in enumerate(topic_ratios):
+            df.loc[i] = list(ratios)
+        df = pd.concat([data_df.loc[:, ['id', 'title', 'link']], df], axis=1)
+        return df
+
     def save_topic_words(self, topic_words, model_type):
         filename = f'{model_type}_topic_words.csv'
         df = pd.DataFrame(columns=['topic'] + [f'word #{i+1}' for i in range(len(topic_words[0]))])
@@ -120,12 +127,11 @@ class Analyzer:
         df.to_csv(os.path.join('data', filename), index=False, encoding='sjis')
         return filename
 
-    def save_topic_ratios(self, topic_ratios, model_type):
+    def save_topic_ratios(self, topic_ratios_df, model_type):
         filename = f'{model_type}_topic_ratios.csv'
-        df = pd.DataFrame(columns=['article'] + [f'topic #{i+1}' for i in range(len(topic_ratios[0]))])
-        for i, ratios in enumerate(topic_ratios):
-            df.loc[i] = [i] + list(ratios)
-        df.to_csv(os.path.join('data', filename), index=False, encoding='sjis')
+        # Open file to ignore UnicodeEncodeError.
+        with open(os.path.join('data', filename), mode='w', encoding='shift-jis', errors='ignore') as f:
+            topic_ratios_df.to_csv(f, index=False)
         return filename
 
     def save_visualization(self, model, model_type):
@@ -145,11 +151,11 @@ class Analyzer:
             db_client = DatabaseClient(cfg.db_filepath)
 
         # load dataset
-        data = db_client.load_dataset(sql_query=self.sql_query)
-        print(f'n_samples:{len(data)}')
+        data_df = db_client.load_dataset(sql_query=self.sql_query)
+        print(f'n_samples:{len(data_df)}')
 
         # vectorize data
-        self.vectorize(data)
+        self.vectorize(data_df['content'])
 
         # initialize result
         result = {
@@ -169,9 +175,12 @@ class Analyzer:
             # fit model
             model, topic_words, topic_ratios = self.fit_model(model_type)
 
+            # create topic_ratio_df for topic ratio table
+            topic_ratios_df = self.create_topic_ratios_df(topic_ratios, data_df)
+
             # save as csv
             topic_words_filename = self.save_topic_words(topic_words, model_type)
-            topic_ratios_filename = self.save_topic_ratios(topic_ratios, model_type)
+            topic_ratios_filename = self.save_topic_ratios(topic_ratios_df, model_type)
 
             # print top words per topic
             print(f'topic words ({model_type}):')
@@ -185,7 +194,7 @@ class Analyzer:
             # update result
             result['models'][model_type]['model'] = model
             result['models'][model_type]['topic_words'] = topic_words
-            result['models'][model_type]['topic_ratios'] = topic_ratios
+            result['models'][model_type]['topic_ratios'] = topic_ratios_df.to_dict(orient='records')
             result['models'][model_type]['topic_words_filename'] = topic_words_filename
             result['models'][model_type]['topic_ratios_filename'] = topic_ratios_filename
             result['models'][model_type]['visualization_filename'] = visualization_filename
