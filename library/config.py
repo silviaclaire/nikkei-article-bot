@@ -1,5 +1,6 @@
 import threading
 import configparser
+import os
 
 
 class Config:
@@ -59,7 +60,7 @@ class Config:
 
     @property
     def db_filepath(self) -> str:
-        return self.parser.get('developer', 'db_filepath')
+        return os.path.join('./data', self.parser.get('developer', 'db_filename'))
 
     @property
     def max_article(self) -> int:

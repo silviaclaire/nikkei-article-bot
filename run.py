@@ -1,4 +1,5 @@
 import sys
+import os
 
 from app import app
 from library.bot import Bot
@@ -8,6 +9,8 @@ from library.config import Config
 
 cfg = Config()
 
+# dataディレクトリを作成する
+os.makedirs('./data', exist_ok=True)
 
 def print_help():
     print(
