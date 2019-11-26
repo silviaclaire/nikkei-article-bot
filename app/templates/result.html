@@ -98,9 +98,15 @@
     </div>
 
     <div>
-        <a class="btn btn-primary" role="button" download="{{ model_result['topic_words_filename'] }}" href="{{ url_for('download', filename=model_result['topic_words_filename']) }}">Download Topic Words</a>
-        <a class="btn btn-primary" role="button" download="{{ model_result['topic_ratios_filename'] }}" href="{{ url_for('download', filename=model_result['topic_ratios_filename']) }}">Download Topic Ratios</a>
-        <a class="btn btn-primary" role="button" href="{{ url_for('static', filename=model_result['visualization_filename']) }}">Show Visualization</a>
+        <a class="btn btn-primary" role="button" download="{{ model_result['topic_words_filename'] }}" href="{{ url_for('download', filename=model_result['topic_words_filename']) }}">
+            Download Topic Words
+        </a>
+        <a class="btn btn-primary" role="button" download="{{ model_result['topic_ratios_filename'] }}" href="{{ url_for('download', filename=model_result['topic_ratios_filename']) }}">
+            Download Topic Ratios
+        </a>
+        <a class="btn btn-primary" role="button" href="{{ url_for('static', filename=model_result['visualization_filename']) }}" target="_blank">
+            Show Visualization
+        </a>
     </div>
 </div>
 

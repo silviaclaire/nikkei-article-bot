@@ -12,6 +12,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from library.constants import *
 from library.config import Config
 from library.db import DatabaseClient
+from library import NMFvis
 
 # read config
 cfg = Config()
@@ -112,11 +113,11 @@ class Analyzer:
 
         return model, topic_words, topic_ratios
 
-    def create_topic_ratios_df(self, topic_ratios, data_df):
+    def create_topic_ratios_df(self, topic_ratios):
         df = pd.DataFrame(columns=[f'topic #{i+1}' for i in range(len(topic_ratios[0]))])
         for i, ratios in enumerate(topic_ratios):
             df.loc[i] = list(ratios)
-        df = pd.concat([data_df.loc[:, ['id', 'title', 'link']], df], axis=1)
+        df = pd.concat([self.data_df.loc[:, ['id', 'title', 'link']], df], axis=1)
         return df
 
     def save_topic_words(self, topic_words, model_type):
@@ -139,9 +140,10 @@ class Analyzer:
             ldavis_result = sklearn_lda.prepare(model, self.tf, self.tf_vectorizer)
             filename = 'lda_visualization.html'
             pyLDAvis.save_html(ldavis_result, os.path.join('app/static/', filename))
-        else:
-            # TODO: create visualization for nmf model
+        elif model_type == 'nmf':
+            tsne_groups = NMFvis.prepare_tsne_groups(model, self.tfidf, self.data_df)
             filename = 'nmf_visualization.html'
+            NMFvis.save_html(tsne_groups, os.path.join('app/static/', filename))
         return filename
 
     def run(self, db_client=None):
@@ -151,11 +153,11 @@ class Analyzer:
             db_client = DatabaseClient(cfg.db_filepath)
 
         # load dataset
-        data_df = db_client.load_dataset(sql_query=self.sql_query)
-        print(f'n_samples:{len(data_df)}')
+        self.data_df = db_client.load_dataset(sql_query=self.sql_query)
+        print(f'n_samples:{len(self.data_df)}')
 
         # vectorize data
-        self.vectorize(data_df['content'])
+        self.vectorize(self.data_df['content'])
 
         # initialize result
         result = {
@@ -176,7 +178,7 @@ class Analyzer:
             model, topic_words, topic_ratios = self.fit_model(model_type)
 
             # create topic_ratio_df for topic ratio table
-            topic_ratios_df = self.create_topic_ratios_df(topic_ratios, data_df)
+            topic_ratios_df = self.create_topic_ratios_df(topic_ratios)
 
             # save as csv
             topic_words_filename = self.save_topic_words(topic_words, model_type)
