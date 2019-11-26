@@ -15,102 +15,183 @@
 
 {% if result %}
 
-<!-- top words -->
-<div>
-    <h4>Top Words</h4>
-    <table class="table table-sm table-hover">
-        <thead>
-            <tr>
-                <th scope="col">#</th>
-                <th scope="col">word</th>
-                <th scope="col">count</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for top_word in result['top_words'] %}
-            <tr>
-                <th scope="row">{{ loop.index }}</th>
-                <td>{{ top_word[0] }}</td>
-                <td>{{ top_word[1] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<!-- nav tabs -->
+<ul class="nav nav-tabs" id="navTab" role="tablist">
+    <li class="nav-item">
+        <a
+                class="nav-link active"
+                id="topword-tab"
+                data-toggle="tab"
+                href="#topword"
+                role="tab"
+                aria-controls="topword"
+                aria-selected="true">
+            Top Words
+        </a>
+    </li>
+    {% for model_type in result['models'].keys() %}
+    <li class="nav-item">
+        <a
+                class="nav-link"
+                id="{{ model_type }}-tab"
+                data-toggle="tab"
+                href="#{{ model_type }}"
+                role="tab"
+                aria-controls="{{ model_type }}"
+                aria-selected="true">
+            {{ model_type.upper() }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
 
+<!-- contents -->
+<div id="tabContent" class="tab-content mt-4">
 
-{% for model_type, model_result in result['models'].items() %}
-<div>
-    <h4>{{ model_type.upper() }}</h4>
-
-    <!-- topic words -->
-    <div>
-        <h5>Topic Words</h5>
+    <!-- top words -->
+    <div class="tab-pane fade show active" id="topword" role="tabpanel" aria-labelledby="topword-tab">
         <table class="table table-sm table-hover">
             <thead>
                 <tr>
-                    <th scope="col">topic</th>
-                    <th scope="col" colspan="{{ model_result['topic_words'][0]|length }}">word</th>
+                    <th scope="col">#</th>
+                    <th scope="col">word</th>
+                    <th scope="col">count</th>
                 </tr>
             </thead>
             <tbody>
-                {% for words in model_result['topic_words'] %}
+                {% for top_word in result['top_words'] %}
                 <tr>
-                    <th scope="row">#{{ loop.index }}</th>
-                    {% for word in words %}
-                    <td>{{ word }}</td>
-                    {% endfor %}
+                    <th scope="row">{{ loop.index }}</th>
+                    <td>{{ top_word[0] }}</td>
+                    <td>{{ top_word[1] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- topic ratios -->
-    <div>
-        <h5>Topic Ratios</h5>
-        <table class="table table-sm table-hover">
-            <thead>
-                <tr>
-                    <th scope="col">id</th>
-                    <th scope="col">title</th>
-                    {% for i in range(model_result['topic_words']|length) %}
-                    <th scope="col">topic #{{ loop.index }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for article_detail in model_result['topic_ratios'] %}
-                <tr>
-                    <th scope="row">#{{ article_detail['id'] }}</th>
-                    <td>
-                        <a href="{{ article_detail['link'] }}" target=”_blank”>{{ article_detail['title'] }}</a>
-                    </td>
-                    {% for col, value in article_detail.items() %}
-                    {% if col.startswith('topic #') %}
-                    <td>{{ value|round(5) }}</td>
-                    {% endif %}
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% for model_type, model_result in result['models'].items() %}
+
+    <div class="tab-pane fade" id="{{ model_type }}" role="tabpanel" aria-labelledby="{{ model_type }}-tab">
+
+        <!-- sub-nav pills -->
+        <ul class="nav nav-pills mb-2 justify-content-center" id="pills-{{ model_type }}-tab" role="tablist">
+            <li class="nav-item">
+                <a
+                        class="nav-link active"
+                        data-toggle="pill"
+                        role="tab"
+                        id="pills-{{ model_type }}-topicword-tab"
+                        href="#pills-{{ model_type }}-topicword"
+                        aria-controls="pills-{{ model_type }}-topicword"
+                        aria-selected="true">
+                    Topic Words
+                </a>
+            </li>
+            <li class="nav-item">
+                <a
+                        class="nav-link"
+                        data-toggle="pill"
+                        role="tab"
+                        id="pills-{{ model_type }}-topicratio-tab"
+                        href="#pills-{{ model_type }}-topicratio"
+                        aria-controls="pills-{{ model_type }}-topicratio"
+                        aria-selected="false">
+                    Topic Ratios
+                </a>
+            </li>
+            <li class="nav-item">
+                <a
+                        class="nav-link"
+                        href="{{ url_for('static', filename=model_result['visualization_filename']) }}"
+                        target="_blank"
+                        role="tab">
+                    Show Visualization
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="pills-tabContent">
+
+            <!-- topic words -->
+            <div
+                    class="tab-pane fade show active"
+                    role="tabpanel"
+                    id="pills-{{ model_type }}-topicword"
+                    aria-labelledby="pills-{{ model_type }}-topicword-tab">
+                <a
+                        class="float-right"
+                        download="{{ model_result['topic_words_filename'] }}"
+                        href="{{ url_for('download', filename=model_result['topic_words_filename']) }}">
+                    Download as CSV
+                </a>
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">topic</th>
+                            <th scope="col" colspan="{{ model_result['topic_words'][0]|length }}">word</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for words in model_result['topic_words'] %}
+                        <tr>
+                            <th scope="row">#{{ loop.index }}</th>
+                            {% for word in words %}
+                            <td>{{ word }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- topic ratios -->
+            <div
+                    class="tab-pane fade"
+                    role="tabpanel"
+                    id="pills-{{ model_type }}-topicratio"
+                    aria-labelledby="pills-{{ model_type }}-topicratio-tab">
+                <a
+                        class="float-right"
+                        download="{{ model_result['topic_ratios_filename'] }}"
+                        href="{{ url_for('download', filename=model_result['topic_ratios_filename']) }}">
+                    Download as CSV
+                </a>
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">id</th>
+                            <th scope="col">title</th>
+                            {% for i in range(model_result['topic_words']|length) %}
+                            <th scope="col">topic #{{ loop.index }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article_detail in model_result['topic_ratios'] %}
+                        <tr>
+                            <th scope="row">#{{ article_detail['id'] }}</th>
+                            <td>
+                                <a href="{{ article_detail['link'] }}" target=”_blank”>{{ article_detail['title'] }}</a>
+                            </td>
+                            {% for col, value in article_detail.items() %}
+                            {% if col.startswith('topic #') %}
+                            <td>{{ value|round(5) }}</td>
+                            {% endif %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
     </div>
 
-    <div>
-        <a class="btn btn-primary" role="button" download="{{ model_result['topic_words_filename'] }}" href="{{ url_for('download', filename=model_result['topic_words_filename']) }}">
-            Download Topic Words
-        </a>
-        <a class="btn btn-primary" role="button" download="{{ model_result['topic_ratios_filename'] }}" href="{{ url_for('download', filename=model_result['topic_ratios_filename']) }}">
-            Download Topic Ratios
-        </a>
-        <a class="btn btn-primary" role="button" href="{{ url_for('static', filename=model_result['visualization_filename']) }}" target="_blank">
-            Show Visualization
-        </a>
-    </div>
+    {% endfor %}
+
 </div>
-
-{% endfor %}
 
 {% else %}
 
