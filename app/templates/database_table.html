@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}DatabaseTable{% endblock %}
+{% block head %}
+
+<style>
+    table {
+        font-size: 0.8em;
+    }
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+<!-- SQL文入力フォーム -->
+<form method="get" action="/database_table">
+    <div class="form-group">
+        <h4>SQL query</h4>
+        <textarea id="sql_query" name="sql_query" rows="3" class="form-control">{{ sql_query }}</textarea>
+    </div>
+    <div class="text-center">
+        <button type="submit" class="btn btn-primary my-3">Submit</button>
+    </div>
+</form>
+
+<!-- テーブル情報を表示 -->
+<div class="pt-2 pb-5">
+    <h4>Articles in Database</h4>
+    <table class="table table-sm table-hover">
+        <thead>
+            <tr>
+                {% for col_name in db_table['columns'] %}
+                {% if col_name != 'link' %}
+                <th scope="col">{{ col_name }}</th>
+                {% endif %}
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for value_list in db_table['data'] %}
+            <tr>
+                <th>{{ value_list[0] }}</th>
+                <!-- value_list[1]は記事のtitle, [2]は記事のlink -->
+                <td><a href="{{ value_list[2] }}" target=”_blank” rel="noopener noreferrer">{{ value_list[1] }}</a></td>
+                <td>{{ value_list[3] }}</td>
+                <td>{{ value_list[4] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

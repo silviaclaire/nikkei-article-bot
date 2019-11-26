@@ -6,6 +6,7 @@ from flask import Flask, render_template, make_response, flash, request, redirec
 
 from library.constants import *
 from library.config import Config
+from library.db import DatabaseClient
 from library.bot_analyzer import BotAnalyzer
 
 
@@ -114,3 +115,14 @@ def download():
         csv_data = f.read()
     return Response(csv_data, mimetype='text/csv',
                     headers={'Content-disposition':f'attachment;filename={filename}'})
+
+@app.route('/database_table')
+def database_table():
+    sql_query = request.args.get('sql_query', default=cfg.sql_query, type=str)
+    db_table = DatabaseClient(cfg.db_filepath)\
+               .load_dataset(sql_query)\
+               .drop(columns=['content'])\
+               .to_dict(orient='split')
+    return render_template('database_table.html',
+                           sql_query=sql_query,
+                           db_table=db_table)
