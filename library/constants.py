@@ -17,6 +17,18 @@ INDUSTRY_OPTIONS = {
 }
 
 
+INPUT_VAL_DESCRIPTION = {
+    'keyword':'検索ワードを指定',
+    'industry':'絞り込みたい産業を指定',
+    'sql_query':'分析対象にする記事を指定',
+    'stop_words':'分析の対象外とする語を指定',
+    'n_components':'いくつのトピックに分けるか指定',
+    'n_features':'出現頻度上位何語で分析するか指定',
+    'n_top_words':'出現頻度上位何語を表示するか指定',
+    'n_topic_words':'トピックごとの単語を何個表示するか指定',
+}
+
+
 class BotAnalyzerStatus:
     IDLE = 'IDLE'
     INITIALIZING = 'INITIALIZING'

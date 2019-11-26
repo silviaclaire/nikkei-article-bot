@@ -36,11 +36,22 @@
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="keyword">keyword</label>
-                    <input id="keyword" name="keyword" type="search" class="form-control">
+                    <input
+                            id="keyword"
+                            name="keyword"
+                            type="search"
+                            class="form-control"
+                            data-toggle="tooltip"
+                            title="{{ input_val_description['keyword'] }}">
                 </div>
                 <div class="form-group col-md-6">
                     <label for="industry">industry</label>
-                    <select id="industry" name="industry" class="form-control">
+                    <select
+                            id="industry"
+                            name="industry"
+                            class="form-control"
+                            data-toggle="tooltip"
+                            title="{{ input_val_description['industry'] }}">
                         <option value="0" selected>{{ industry_options[0] }}</option>
                         {% for key, val in industry_options.items() %}
                         <option value="{{ key }}">{{ val }}</option>
@@ -56,28 +67,72 @@
             <h5 class="card-title">Analyzation Params</h5>
             <div class="form-group">
                 <label for="sql_query">sql_query</label>
-                <textarea id="sql_query" name="sql_query" rows="3" class="form-control">{{ default_values['sql_query'] }}</textarea>
+                <textarea
+                        id="sql_query"
+                        name="sql_query"
+                        rows="3"
+                        class="form-control"
+                        data-toggle="tooltip"
+                        title="{{ input_val_description['sql_query'] }}">
+                    {{- default_values['sql_query'] }}
+                </textarea>
             </div>
             <div class="form-group">
                 <label for="stop_words">stop_words</label>
-                <textarea id="stop_words" name="stop_words" rows="3" class="form-control">{{ default_values['stop_words'] }}</textarea>
+                <textarea
+                        id="stop_words"
+                        name="stop_words"
+                        rows="3"
+                        class="form-control"
+                        data-toggle="tooltip"
+                        title="{{ input_val_description['stop_words'] }}">
+                    {{- default_values['stop_words'] }}
+                </textarea>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-3">
                     <label for="n_components">n_components</label>
-                    <input id="n_components" name="n_components" type="number" class="form-control", value="{{ default_values['n_components'] }}">
+                    <input
+                            id="n_components"
+                            name="n_components"
+                            type="number"
+                            class="form-control"
+                            value="{{ default_values['n_components'] }}"
+                            data-toggle="tooltip"
+                            title="{{ input_val_description['n_components'] }}">
                 </div>
                 <div class="form-group col-md-3">
                     <label for="n_features">n_features</label>
-                    <input id="n_features" name="n_features" type="number" class="form-control", value="{{ default_values['n_features'] }}">
+                    <input
+                            id="n_features"
+                            name="n_features"
+                            type="number"
+                            class="form-control"
+                            value="{{ default_values['n_features'] }}"
+                            data-toggle="tooltip"
+                            title="{{ input_val_description['n_features'] }}">
                 </div>
                 <div class="form-group col-md-3">
                     <label for="n_top_words">n_top_words</label>
-                    <input id="n_top_words" name="n_top_words" type="number" class="form-control", value="{{ default_values['n_top_words'] }}">
+                    <input
+                            id="n_top_words"
+                            name="n_top_words"
+                            type="number"
+                            class="form-control"
+                            value="{{ default_values['n_top_words'] }}"
+                            data-toggle="tooltip"
+                            title="{{ input_val_description['n_top_words'] }}">
                 </div>
                 <div class="form-group col-md-3">
                     <label for="n_topic_words">n_topic_words</label>
-                    <input id="n_topic_words" name="n_topic_words" type="number" class="form-control", value="{{ default_values['n_topic_words'] }}">
+                    <input
+                            id="n_topic_words"
+                            name="n_topic_words"
+                            type="number"
+                            class="form-control"
+                            value="{{ default_values['n_topic_words'] }}"
+                            data-toggle="tooltip"
+                            title="{{ input_val_description['n_topic_words'] }}">
                 </div>
             </div>
         </div>

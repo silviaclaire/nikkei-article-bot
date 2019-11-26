@@ -35,7 +35,8 @@ def index():
 def settings():
     return render_template('settings.html',
                            industry_options=INDUSTRY_OPTIONS,
-                           default_values=DEFAULT_VALUES)
+                           default_values=DEFAULT_VALUES,
+                           input_val_description=INPUT_VAL_DESCRIPTION)
 
 @app.route('/run', methods=['POST'])
 def run():
@@ -113,4 +114,3 @@ def download():
         csv_data = f.read()
     return Response(csv_data, mimetype='text/csv',
                     headers={'Content-disposition':f'attachment;filename={filename}'})
-
