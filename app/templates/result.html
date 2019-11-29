@@ -7,6 +7,15 @@
     table {
         font-size: 0.8em;
     }
+    .sort {
+        cursor: pointer;
+    }
+    .sort.desc:after {
+        content: "▼";
+    }
+    .sort.asc:after {
+        content: "▲";
+    }
 </style>
 
 {% endblock %}
@@ -160,23 +169,23 @@
                 <table class="table table-sm table-hover">
                     <thead>
                         <tr>
-                            <th scope="col">id</th>
-                            <th scope="col">title</th>
+                            <th scope="col" class="sort" data-sort="id">id</th>
+                            <th scope="col" class="sort" data-sort="title">title</th>
                             {% for i in range(model_result['topic_words']|length) %}
-                            <th scope="col">topic #{{ loop.index }}</th>
+                            <th scope="col" class="sort" data-sort="topic #{{ loop.index }}">topic #{{ loop.index }}</th>
                             {% endfor %}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="list">
                         {% for article_detail in model_result['topic_ratios'] %}
                         <tr>
-                            <th scope="row">#{{ article_detail['id'] }}</th>
-                            <td>
+                            <th scope="row" class="id">#{{ article_detail['id'] }}</th>
+                            <td class="title">
                                 <a href="{{ article_detail['link'] }}" target=”_blank”>{{ article_detail['title'] }}</a>
                             </td>
                             {% for col, value in article_detail.items() %}
                             {% if col.startswith('topic #') %}
-                            <td>{{ value|round(5) }}</td>
+                            <td class="{{ col }}">{{ value|round(5) }}</td>
                             {% endif %}
                             {% endfor %}
                         </tr>
@@ -198,6 +207,38 @@
 <div class="alert alert-info" role="alert">
     No results yet.
 </div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block script %}
+
+{% if result %}
+
+{# model_typeとtopic_ratioテーブルの列名を取得しておく #}
+{% set model_type = result['models'].keys() | list %}
+{% set topic_ratio_col = result['models'][model_type[0]]['topic_ratios'][0].keys() | list %}
+
+<!-- sort -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/1.5.0/list.min.js"></script>
+
+<script>
+
+    const modelTypes = {{ model_type | tojson | safe }}
+    const options = {
+        valueNames: {{ topic_ratio_col | tojson | safe }}
+    }
+    let topicRatioList = []
+
+    // それぞれのモデルについてループして処理する。
+    for (const modelType of modelTypes) {
+        topicRatioList.push(new List(`pills-${modelType}-topicratio`, options))
+        // id列について昇順に整列させたものを初期値にする
+        topicRatioList[topicRatioList.length - 1].sort('id', {order : 'asc'})
+    }
+
+</script>
 
 {% endif %}
 
