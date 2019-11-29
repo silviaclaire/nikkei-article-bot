@@ -31,5 +31,4 @@ class DatabaseClient:
     def load_dataset(self, sql_query):
         with sqlite3.connect(self.db_filepath) as conn:
             df = pd.read_sql_query(sql_query, conn)
-
         return df

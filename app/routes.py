@@ -17,13 +17,15 @@ cfg = Config()
 bot_analyzer = None
 
 
-DEFAULT_VALUES = {
-    'sql_query': cfg.sql_query,
-    'n_components': cfg.n_components,
-    'n_features': cfg.n_features,
-    'stop_words': cfg.stop_words,
-    'n_top_words': cfg.n_top_words,
-    'n_topic_words': cfg.n_topic_words,
+params = {
+    'keyword': None,
+    'industry': None,
+    'sql_query': None,
+    'n_components': None,
+    'n_features': None,
+    'stop_words': None,
+    'n_top_words': None,
+    'n_topic_words': None,
 }
 
 
@@ -34,46 +36,37 @@ def index():
 
 @app.route('/settings')
 def settings():
+    global params
+    for name in params.keys():
+        params[name] = getattr(cfg, name)
     return render_template('settings.html',
                            industry_options=INDUSTRY_OPTIONS,
-                           default_values=DEFAULT_VALUES,
+                           default_values=params,
                            input_val_description=INPUT_VAL_DESCRIPTION)
 
 @app.route('/run', methods=['POST'])
 def run():
-    try:
-        keyword = request.form.get('keyword', default=cfg.keyword, type=str)
-        industry = request.form.get('industry', default=cfg.industry, type=int)
-        sql_query = request.form.get('sql_query', default=cfg.sql_query, type=str)
-        n_components = request.form.get('n_components', default=cfg.n_components, type=int)
-        n_features = request.form.get('n_features', default=cfg.n_features, type=int)
-        stop_words = request.form.get('stop_words', default=cfg.stop_words, type=str)
-        if type(stop_words) is str:
-            stop_words = stop_words.split(',')
-        n_top_words = request.form.get('n_top_words', default=cfg.n_top_words, type=int)
-        n_topic_words = request.form.get('n_topic_words', default=cfg.n_topic_words, type=int)
-        if n_components < 0:
-            raise ValueError('less than zero')
-    except Exception as err:
-        flash(err, category='warning')
-        return make_response(render_template('settings.html', industry_options=INDUSTRY_OPTIONS, default_values=DEFAULT_VALUES), 400)
-
+    global params
     global bot_analyzer
+
+    # get params in string format
+    for name in params.keys():
+        params[name] = request.form.get(name, type=str)
 
     # if still processing
     if (bot_analyzer) and (bot_analyzer.status in BotAnalyzerStatus.PROCESSING):
         return render_template('error.html', error=bot_analyzer.status), 400
 
     # initialize and run bot_analyzer
-    bot_analyzer = BotAnalyzer(keyword=keyword,
-                               industry=industry,
-                               sql_query=sql_query,
-                               n_components=n_components,
-                               n_features=n_features,
-                               stop_words=stop_words,
-                               n_top_words=n_top_words,
-                               n_topic_words=n_topic_words,
-                               )
+    try:
+        bot_analyzer = BotAnalyzer(**params)
+    except Exception as err:
+        flash(err, category='warning')
+        return make_response(render_template('settings.html',
+                                             industry_options=INDUSTRY_OPTIONS,
+                                             default_values=params,
+                                             input_val_description=INPUT_VAL_DESCRIPTION,
+                                            ), 400)
     bot_analyzer.setDaemon(True)
     bot_analyzer.start()
 

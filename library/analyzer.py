@@ -23,13 +23,18 @@ class Analyzer:
                  sql_query:str,
                  n_components:int,
                  n_features:int,
-                 stop_words:list,
+                 stop_words,
                  n_top_words:int,
                  n_topic_words:int):
         self.sql_query = sql_query
         self.n_components = n_components
         self.n_features = n_features
-        self.stop_words = stop_words
+        if type(stop_words) is str:
+            self.stop_words = stop_words.split(',')
+        elif type(stop_words) is list:
+            self.stop_words = stop_words
+        else:
+            self.stop_words = []
         self.n_top_words = n_top_words
         self.n_topic_words = n_topic_words
 

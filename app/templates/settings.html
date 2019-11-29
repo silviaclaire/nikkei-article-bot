@@ -28,7 +28,7 @@
 {% endwith %}
 
 <!-- input form -->
-<form method="post" action="/run" enctype="multipart/form-data">
+<form method="post" action="/run" enctype="multipart/form-data" class="needs-validation" novalidate>
     <!-- search conditions -->
     <div class="card mt-2">
         <div class="card-body">
@@ -42,6 +42,7 @@
                             type="search"
                             class="form-control"
                             data-toggle="tooltip"
+                            value="{{ default_values['keyword'] }}"
                             title="{{ input_val_description['keyword'] }}">
                 </div>
                 <div class="form-group col-md-6">
@@ -52,9 +53,12 @@
                             class="form-control"
                             data-toggle="tooltip"
                             title="{{ input_val_description['industry'] }}">
-                        <option value="0" selected>{{ industry_options[0] }}</option>
                         {% for key, val in industry_options.items() %}
+                        {% if (key == default_values['industry']) %}
+                        <option value="{{ key }}" selected>{{ val }}</option>
+                        {% else %}
                         <option value="{{ key }}">{{ val }}</option>
+                        {% endif %}
                         {% endfor %}
                     </select>
                 </div>
@@ -68,6 +72,7 @@
             <div class="form-group">
                 <label for="sql_query">sql_query</label>
                 <textarea
+                        required
                         id="sql_query"
                         name="sql_query"
                         rows="3"
@@ -76,6 +81,9 @@
                         title="{{ input_val_description['sql_query'] }}">
                     {{- default_values['sql_query'] }}
                 </textarea>
+                <div class="invalid-feedback">
+                    Please enter an SQL query.
+                </div>
             </div>
             <div class="form-group">
                 <label for="stop_words">stop_words</label>
@@ -93,46 +101,66 @@
                 <div class="form-group col-md-3">
                     <label for="n_components">n_components</label>
                     <input
+                            required
                             id="n_components"
                             name="n_components"
                             type="number"
+                            min="1"
                             class="form-control"
-                            value="{{ default_values['n_components'] }}"
                             data-toggle="tooltip"
+                            value="{{ default_values['n_components'] }}"
                             title="{{ input_val_description['n_components'] }}">
+                    <div class="invalid-feedback">
+                        must be a positive integer.
+                    </div>
                 </div>
                 <div class="form-group col-md-3">
                     <label for="n_features">n_features</label>
                     <input
+                            required
                             id="n_features"
                             name="n_features"
                             type="number"
+                            min="1"
                             class="form-control"
-                            value="{{ default_values['n_features'] }}"
                             data-toggle="tooltip"
+                            value="{{ default_values['n_features'] }}"
                             title="{{ input_val_description['n_features'] }}">
+                    <div class="invalid-feedback">
+                        must be a positive integer.
+                    </div>
                 </div>
                 <div class="form-group col-md-3">
                     <label for="n_top_words">n_top_words</label>
                     <input
+                            required
                             id="n_top_words"
                             name="n_top_words"
                             type="number"
+                            min="1"
                             class="form-control"
-                            value="{{ default_values['n_top_words'] }}"
                             data-toggle="tooltip"
+                            value="{{ default_values['n_top_words'] }}"
                             title="{{ input_val_description['n_top_words'] }}">
+                    <div class="invalid-feedback">
+                        must be a positive integer.
+                    </div>
                 </div>
                 <div class="form-group col-md-3">
                     <label for="n_topic_words">n_topic_words</label>
                     <input
+                            required
                             id="n_topic_words"
                             name="n_topic_words"
                             type="number"
+                            min="1"
                             class="form-control"
-                            value="{{ default_values['n_topic_words'] }}"
                             data-toggle="tooltip"
+                            value="{{ default_values['n_topic_words'] }}"
                             title="{{ input_val_description['n_topic_words'] }}">
+                    <div class="invalid-feedback">
+                        must be a positive integer.
+                    </div>
                 </div>
             </div>
         </div>
@@ -144,4 +172,29 @@
     </div>
 </form>
 
+{% endblock %}
+
+{% block script %}
+<script>
+
+// disable form submissions if there are invalid fields
+$(function() {
+    "use strict";
+    $(window).on("load", ()=>{
+        // fetch all the forms that need validation
+        let forms = $(".needs-validation")
+        // loop over them and prevent submission
+        let validation = Array.prototype.filter.call(forms, (form)=>{
+            form.addEventListener("submit", (event)=>{
+                if (form.checkValidity() === false) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add("was-validated")
+            }, false)
+        })
+    })
+})
+
+</script>
 {% endblock %}

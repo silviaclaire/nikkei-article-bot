@@ -47,8 +47,8 @@ class Config:
         return self.parser.getint('analyzer', 'n_features')
 
     @property
-    def stop_words(self) -> list:
-        return self.parser.get('analyzer', 'stop_words').split(',')
+    def stop_words(self) -> str:
+        return self.parser.get('analyzer', 'stop_words')
 
     @property
     def n_top_words(self) -> int:
