@@ -45,8 +45,9 @@ $ python
 $ cd nikkei_article_bot
 $ . env/bin/activate
 
-# MUST modify developer settings in config.ini
-$ vi config.ini
+# (for developers) create config.dev.ini to use your own settings
+$ cp config.ini config.dev.ini
+$ vi config.dev.ini
 
 # show help
 $ python run.py

@@ -129,3 +129,4 @@ settings.json
 data/
 uploads/
 app/static/*.html
+config.dev.ini

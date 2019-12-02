@@ -20,7 +20,14 @@ class Config:
             return
 
         self.parser = configparser.ConfigParser()
-        self.parser.read('config.ini', encoding='utf-8')
+
+        # 開発用configファイルが存在する場合そちらをロードする
+        if os.path.exists('config.dev.ini'):
+            self.parser.read('config.dev.ini', encoding='utf-8')
+            print('using development config')
+        else:
+            self.parser.read('config.ini', encoding='utf-8')
+            print('using production config')
 
     @property
     def keyword(self) -> str:
