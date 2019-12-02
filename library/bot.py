@@ -34,7 +34,7 @@ class Bot:
         # join them all and return
         return ''.join(p_list)
 
-    def _scrawl_page(self, url):
+    def _crawl_page(self, url):
         # get article page
         headers = {'User-Agent': UserAgent().random}
         result = requests.get(url,headers=headers)
@@ -97,8 +97,8 @@ class Bot:
             # set random request interval 0.5s~2s
             sleep(round(random.uniform(0.5, 2), 1))
 
-            # scrawl article
-            article = self._scrawl_page(url)
+            # crawl article
+            article = self._crawl_page(url)
 
             # skip to next article if failed
             if article is None:

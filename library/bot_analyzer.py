@@ -104,7 +104,7 @@ class BotAnalyzer(threading.Thread):
 
             if urls is not None:
                 # run bot
-                self.status = BotAnalyzerStatus.SCRAWLING
+                self.status = BotAnalyzerStatus.CRAWLING
                 bot = Bot(keyword=self.keyword, industry=self.industry)
                 for progress in bot.run(urls, self.db_client):
                     self.progress = progress
